@@ -1,0 +1,45 @@
+{
+  "name": "uni-run",
+  "version": "0.0.1",
+  "description": "Universal package manager script runner — fast Go binary distributed via npm",
+  "main": "index.js",
+  "bin": {
+    "uni-run": "index.js"
+  },
+  "files": [
+    "index.js",
+    "bin",
+    "README.md",
+    "LICENSE"
+  ],
+  "optionalDependencies": {
+    "uni-run-darwin-x64": "0.0.1",
+    "uni-run-darwin-arm64": "0.0.1",
+    "uni-run-linux-x64": "0.0.1",
+    "uni-run-linux-arm64": "0.0.1",
+    "uni-run-win32-x64": "0.0.1"
+  },
+  "keywords": [
+    "cli",
+    "package-manager",
+    "npm",
+    "yarn",
+    "pnpm",
+    "bun",
+    "runner",
+    "go"
+  ],
+  "author": "Bidyut Mahanta <bidyutmahanta7768@outlook.com>",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/yourname/uni-run.git"
+  },
+  "bugs": {
+    "url": "https://github.com/yourname/uni-run/issues"
+  },
+  "homepage": "https://github.com/yourname/uni-run#readme",
+  "engines": {
+    "node": ">=16"
+  }
+}

@@ -1,0 +1,41 @@
+{
+  "name": "uni-run",
+  "version": "0.0.1",
+  "description": "Universal package manager script runner  fast, zero config, distributed via npm",
+  "keywords": [
+    "runner",
+    "package-manager",
+    "npm",
+    "yarn",
+    "pnpm",
+    "bun",
+    "go",
+    "cli"
+  ],
+  
+  
+  "license": "MIT",
+  "author": "Bidyut Mahanta bidyutmahanta7768@outlook.com",
+  "scripts": {
+    "build": "go build -ldflags=\"-s -w\" -o bin/uni-run ./src",
+    "build:all": "make build-all",
+    "package:npm": "make package-npm",
+    "test": "go test -v ./...",
+    "lint": "golangci-lint run",
+    "clean": "rm -rf bin/ dist/",
+    "precommit": "npm run lint && npm run test"
+  },
+  "engines": {
+    "node": ">=16.0.0",
+    "npm": ">=7.0.0"
+  },
+  "os": [
+    "darwin",
+    "linux",
+    "windows"
+  ],
+  "arch": [
+    "amd64",
+    "arm64"
+  ]
+}
