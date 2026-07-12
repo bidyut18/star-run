@@ -6,11 +6,11 @@ const os = require('os');
 
 const platform = os.platform();
 const arch = os.arch();
-const binaryName = platform === 'win32' ? 'uni-run.exe' : 'uni-run';
+const binaryName = platform === 'win32' ? 'cat-run.exe' : 'cat-run';
 
 function getBinaryPath() {
   // 1. Try platform-specific optional dependency
-  const platformPkg = `uni-run-${platform}-${arch}`;
+  const platformPkg = `cat-run-${platform}-${arch}`;
   try {
     const pkgPath = require.resolve(`${platformPkg}/package.json`);
     const pkgDir = path.dirname(pkgPath);
@@ -41,7 +41,7 @@ const binaryPath = getBinaryPath();
 
 if (!binaryPath) {
   console.error('');
-  console.error(`❌  uni-run: No binary found for ${platform}-${arch}.`);
+  console.error(`❌  cat-run: No binary found for ${platform}-${arch}.`);
   console.error('');
   console.error('   Supported platforms:');
   console.error('   • macOS:   darwin-x64, darwin-arm64');
@@ -49,8 +49,8 @@ if (!binaryPath) {
   console.error('   • Windows: win32-x64');
   console.error('');
   console.error('   Install from source:');
-  console.error('   git clone https://github.com/yourname/uni-run.git');
-  console.error('   cd uni-run && go build -o bin/uni-run ./src');
+  console.error('   git clone https://github.com/bidyut18/cat-run.git');
+  console.error('   cd cat-run && go build -o bin/cat-run ./src');
   console.error('');
   process.exit(1);
 }
@@ -65,6 +65,6 @@ child.on('exit', (code) => {
 });
 
 child.on('error', (err) => {
-  console.error(`❌  Failed to spawn uni-run: ${err.message}`);
+  console.error(`❌  Failed to spawn cat-run: ${err.message}`);
   process.exit(1);
 });

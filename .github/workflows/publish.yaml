@@ -1,0 +1,53 @@
+name: Publish to npm
+
+on:
+  push:
+    tags:
+      - 'v*'             # e.g. v0.0.1, v1.2.3
+  workflow_dispatch:     
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    container:
+      image: alpine:latest
+
+    steps:
+      - name: Install dependencies
+        run: |
+          apk add --no-cache \
+            make \
+            git \
+            go \
+            nodejs \
+            npm \
+            bash
+
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Build all binaries (cross platform)
+        run: make build-all
+
+      - name: Package npm tarballs
+        run: make package-npm
+
+      # Publish platform packages first
+      - name: Publish platform specific packages
+        run: |
+          cd npm
+          for pkg in cat-run-*/; do
+            cd "$pkg"
+            npm publish --access public
+            cd ..
+          done
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+
+      # Publish the main wrapper
+      - name: Publish main wrapper
+        run: |
+          cd npm/cat-run
+          npm publish --access public
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}

@@ -1,7 +1,7 @@
 {
-  "name": "uni-run",
+  "name": "cat-run",
   "version": "0.0.1",
-  "description": "Universal package manager script runner  fast, zero config, distributed via npm",
+  "description": "Universal package manager script runner for JS/TS projects fast, zero config, distributed via npm",
   "keywords": [
     "runner",
     "package-manager",
@@ -12,12 +12,10 @@
     "go",
     "cli"
   ],
-  
-  
   "license": "MIT",
   "author": "Bidyut Mahanta bidyutmahanta7768@outlook.com",
   "scripts": {
-    "build": "go build -ldflags=\"-s -w\" -o bin/uni-run ./src",
+    "build": "go build -ldflags=\"-s -w\" -o bin/cat-run ./src",
     "build:all": "make build-all",
     "package:npm": "make package-npm",
     "test": "go test -v ./...",
@@ -28,14 +26,5 @@
   "engines": {
     "node": ">=16.0.0",
     "npm": ">=7.0.0"
-  },
-  "os": [
-    "darwin",
-    "linux",
-    "windows"
-  ],
-  "arch": [
-    "amd64",
-    "arm64"
-  ]
+  }
 }

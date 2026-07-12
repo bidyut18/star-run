@@ -1,10 +1,10 @@
 {
-  "name": "uni-run",
+  "name": "cat-run",
   "version": "0.0.1",
   "description": "Universal package manager script runner — fast Go binary distributed via npm",
   "main": "index.js",
   "bin": {
-    "uni-run": "index.js"
+    "cat-run": "index.js"
   },
   "files": [
     "index.js",
@@ -13,11 +13,11 @@
     "LICENSE"
   ],
   "optionalDependencies": {
-    "uni-run-darwin-x64": "0.0.1",
-    "uni-run-darwin-arm64": "0.0.1",
-    "uni-run-linux-x64": "0.0.1",
-    "uni-run-linux-arm64": "0.0.1",
-    "uni-run-win32-x64": "0.0.1"
+    "cat-run-darwin-x64": "0.0.1",
+    "cat-run-darwin-arm64": "0.0.1",
+    "cat-run-linux-x64": "0.0.1",
+    "cat-run-linux-arm64": "0.0.1",
+    "cat-run-win32-x64": "0.0.1"
   },
   "keywords": [
     "cli",
@@ -33,12 +33,12 @@
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/yourname/uni-run.git"
+    "url": "git+https://github.com/bidyut18/cat-run.git"
   },
   "bugs": {
-    "url": "https://github.com/yourname/uni-run/issues"
+    "url": "https://github.com/bidyut18/cat-run/issues"
   },
-  "homepage": "https://github.com/yourname/uni-run#readme",
+  "homepage": "https://github.com/bidyut18/cat-run#readme",
   "engines": {
     "node": ">=16"
   }

@@ -7,10 +7,10 @@ vendor/
 go.work
 go.work.sum
 
-npm/uni-run-*/
+npm/cat-run-*/
 npm/*/*.tgz
 npm/*/package-lock.json
-npm/uni-run/bin/**
+npm/cat-run/bin/**
 node_modules/
 
 coverage/

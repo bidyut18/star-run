@@ -15,14 +15,13 @@ func main() {
 	listFlag := flag.Bool("list", false, "List available scripts from package.json")
 	detectFlag := flag.Bool("detect", false, "Show the detected package manager")
 
-	// Customize usage output
 	flag.Usage = func() {
-		fmt.Fprintf(os.Stderr, "uni-run: Universal package manager script runner\n\n")
+		fmt.Fprintf(os.Stderr, "cat-run: Universal package manager script runner\n\n")
 		fmt.Fprintf(os.Stderr, "Usage:\n")
-		fmt.Fprintf(os.Stderr, "  uni-run <script> [args...]\n")
-		fmt.Fprintf(os.Stderr, "  uni-run --install\n")
-		fmt.Fprintf(os.Stderr, "  uni-run --list\n")
-		fmt.Fprintf(os.Stderr, "  uni-run --detect\n")
+		fmt.Fprintf(os.Stderr, "  cat-run <script> [args...]\n")
+		fmt.Fprintf(os.Stderr, "  cat-run --install\n")
+		fmt.Fprintf(os.Stderr, "  cat-run --list\n")
+		fmt.Fprintf(os.Stderr, "  cat-run --detect\n")
 	}
 	flag.Parse()
 
@@ -36,7 +35,6 @@ func main() {
 		fatalf("Detection Error: No lockfile or packageManager field found in tree.\n")
 	}
 
-	// Setup context for graceful OS signal propagation
 	ctx, cancel := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
 	defer cancel()
 

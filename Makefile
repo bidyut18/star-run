@@ -1,4 +1,4 @@
-BINARY_NAME=uni-run
+BINARY_NAME=cat-run
 
 .PHONY: build build-native build-all test clean package-npm
 
@@ -22,7 +22,7 @@ test:
 # Clean binaries and generated npm package.json files
 clean:
 	rm -rf bin/*
-	rm -f npm/*/uni-run npm/*/uni-run.exe  # remove binaries in npm packages
+	rm -f npm/*/cat-run npm/*/cat-run.exe  # remove binaries in npm packages
 	rm -f npm/*/package.json               # remove generated package.json files
 
 # Package all binaries into npm tarballs

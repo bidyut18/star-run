@@ -9,7 +9,7 @@ import (
 	"strings"
 )
 
-// PackageJSON models the minimal fields required for detection and listing
+
 type PackageJSON struct {
 	PackageManager string            `json:"packageManager"`
 	Scripts        map[string]string `json:"scripts"`
@@ -25,7 +25,6 @@ func listScripts(startDir string, pm PackageManager, stopDir string) {
 			pkgPath = p
 			break
 		}
-		// Stop if we've reached stopDir and didn't find package.json
 		if stopDir != "" && dir == stopDir {
 			fatalf("Error: No package.json found in tree.\n")
 		}

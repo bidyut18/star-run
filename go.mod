@@ -1,3 +1,3 @@
-module github.com/bidyut18/uni-run
+module github.com/bidyut18/cat-run
 
 go 1.26

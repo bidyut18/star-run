@@ -1,0 +1,39 @@
+name: CI
+
+on:
+  push:
+    branches: [ main, master ]
+  pull_request:
+    branches: [ main, master ]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    container:
+      image: alpine:latest
+
+    steps:
+      - name: Install dependencies
+        run: |
+          apk add --no-cache \
+            make \
+            git \
+            go \
+            nodejs \
+            npm \
+            bash
+
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Run tests
+        run: go test -v ./src
+
+      - name: Build binaries (verify compilation)
+        run: make build-all
+
+      - name: (Optional) Run lint
+        run: |
+          go install github.com/golangci/golangci-lint/cmd/golangci-lint@latest
+          golangci-lint run ./src
+        continue-on-error: true

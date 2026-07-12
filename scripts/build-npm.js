@@ -16,12 +16,11 @@
 const fs = require("fs");
 const path = require("path");
 
-// ----- version from root -----
 const rootPkg = require("../package.json");
 const version = rootPkg.version;
 
 const author = "Bidyut Mahanta <bidyutmahanta7768@outlook.com>";
-const repoUrl = "https://github.com/yourname/uni-run";
+const repoUrl = "https://github.com/bidyut18/cat-run";
 
 const targets = [
   { platform: "darwin", arch: "x64", binDir: "darwin-amd64" },
@@ -38,11 +37,11 @@ let missingCount = 0;
 
 // ---- 1. Create platform packages ----
 for (const target of targets) {
-  const pkgName = `uni-run-${target.platform}-${target.arch}`;
+  const pkgName = `cat-run-${target.platform}-${target.arch}`;
   const pkgDir = path.join(npmDir, pkgName);
   fs.mkdirSync(pkgDir, { recursive: true });
 
-  const binaryName = target.platform === "win32" ? "uni-run.exe" : "uni-run";
+  const binaryName = target.platform === "win32" ? "cat-run.exe" : "cat-run";
   const srcBinary = path.join(binDir, target.binDir, binaryName);
   const destBinary = path.join(pkgDir, binaryName);
 
@@ -60,7 +59,7 @@ for (const target of targets) {
   const pkgJson = {
     name: pkgName,
     version: version, // use root version
-    description: `uni-run binary for ${target.platform}-${target.arch}`,
+    description: `cat-run binary for ${target.platform}-${target.arch}`,
     author,
     os: [target.platform],
     cpu: [target.arch],
@@ -88,26 +87,34 @@ if (missingCount > 0) {
 
 // ---- 2. Create main wrapper package ----
 function createMainWrapper() {
-  const mainDir = path.join(npmDir, "uni-run");
+  const mainDir = path.join(npmDir, "cat-run");
   fs.mkdirSync(mainDir, { recursive: true });
 
   // (Optional) copy index.js and bin folder if not present
   // but we assume they exist in the repo already.
-
+  const srcIndex = path.join(__dirname, "..", "index.js");
+  if (fs.existsSync(srcIndex)) {
+    fs.copyFileSync(srcIndex, path.join(mainDir, "index.js"));
+    console.log("✅  Copied index.js");
+  } else {
+    console.warn(
+      "⚠️  index.js not found at project root; make sure to place it there.",
+    );
+  }
   const pkgJson = {
-    name: "uni-run",
+    name: "cat-run",
     version: version,
     description:
       "Universal package manager script runner — fast Go binary distributed via npm",
     main: "index.js",
-    bin: { "uni-run": "index.js" },
+    bin: { "cat-run": "index.js" },
     files: ["index.js", "bin", "README.md", "LICENSE"],
     optionalDependencies: {
-      "uni-run-darwin-x64": version,
-      "uni-run-darwin-arm64": version,
-      "uni-run-linux-x64": version,
-      "uni-run-linux-arm64": version,
-      "uni-run-win32-x64": version,
+      "cat-run-darwin-x64": version,
+      "cat-run-darwin-arm64": version,
+      "cat-run-linux-x64": version,
+      "cat-run-linux-arm64": version,
+      "cat-run-win32-x64": version,
     },
     keywords: [
       "cli",
@@ -141,5 +148,5 @@ function createMainWrapper() {
 createMainWrapper();
 
 console.log("\n✅  Done! Publish order:");
-console.log("    1. npm/uni-run-* (platform packages)");
-console.log("    2. npm/uni-run (main wrapper)");
+console.log("    1. npm/cat-run-* (platform packages)");
+console.log("    2. npm/cat-run (main wrapper)");

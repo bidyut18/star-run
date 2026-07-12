@@ -8,7 +8,6 @@ import (
 	"strings"
 )
 
-// PackageManager represents the detected package manager
 type PackageManager int
 
 const (
@@ -39,14 +38,12 @@ func (pm PackageManager) installArgs() []string {
 
 func (pm PackageManager) runArgs(script string) []string {
 	if pm == Yarn {
-		return []string{script} // Yarn uses `yarn script`
+		return []string{script} 
 	}
-	return []string{"run", script} // Others use `pm run script`
+	return []string{"run", script} 
 }
 
-// detectPackageManager detects the package manager based on lockfiles
-// and the packageManager field in package.json (traversing upward).
-// If stopDir is non-empty, traversal stops at that directory (for testing).
+
 func detectPackageManager(dir, stopDir string) (PackageManager, error) {
 	for {
 		// 1. Check package.json for a "packageManager" hint
@@ -70,11 +67,9 @@ func detectPackageManager(dir, stopDir string) (PackageManager, error) {
 				case "bun":
 					return Bun, nil
 				}
-				// unknown – fall through to lockfiles
 			}
 		}
 
-		// 2. Check for lockfiles
 		if _, err := os.Stat(filepath.Join(dir, "package-lock.json")); err == nil {
 			return Npm, nil
 		}
@@ -91,15 +86,13 @@ func detectPackageManager(dir, stopDir string) (PackageManager, error) {
 			return Bun, nil
 		}
 
-		// 3. Stop if we've reached the stopDir (if set) and found nothing
 		if stopDir != "" && dir == stopDir {
 			break
 		}
 
-		// 4. Move up one level
 		parent := filepath.Dir(dir)
 		if parent == dir {
-			break // reached filesystem root
+			break 
 		}
 		dir = parent
 	}
