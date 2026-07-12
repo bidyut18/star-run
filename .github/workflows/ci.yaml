@@ -2,9 +2,9 @@ name: CI
 
 on:
   push:
-    branches: [ main, master ]
+    branches: [main, master]
   pull_request:
-    branches: [ main, master ]
+    branches: [main, master]
 
 jobs:
   test:
@@ -15,16 +15,14 @@ jobs:
     steps:
       - name: Install dependencies
         run: |
-          apk add --no-cache \
-            make \
-            git \
-            go \
-            nodejs \
-            npm \
-            bash
+          apk add --no-cache make git go nodejs npm bash
 
       - name: Checkout code
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Mark checkout as safe
+        run: git config --global --add safe.directory '*'
 
       - name: Run tests
         run: go test -v ./src

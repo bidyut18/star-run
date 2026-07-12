@@ -1,19 +1,19 @@
 BINARY_NAME=cat-run
-LDFLAGS=-ldflags="-s -w -buildvcs=false"
+LDFLAGS=-ldflags="-s -w"
+GOFLAGS=-buildvcs=false
 
 .PHONY: build build-native build-all test clean package-npm
 
-
 build build-native:
-	go build $(LDFLAGS) -o bin/$(BINARY_NAME) ./src
+    go build $(GOFLAGS) $(LDFLAGS) -o bin/$(BINARY_NAME) ./src
 
 build-all:
-	mkdir -p bin/darwin-amd64 bin/darwin-arm64 bin/linux-amd64 bin/linux-arm64 bin/windows-amd64
-	GOOS=darwin  GOARCH=amd64 go build $(LDFLAGS) -o bin/darwin-amd64/$(BINARY_NAME) ./src
-	GOOS=darwin  GOARCH=arm64 go build $(LDFLAGS) -o bin/darwin-arm64/$(BINARY_NAME) ./src
-	GOOS=linux   GOARCH=amd64 go build $(LDFLAGS) -o bin/linux-amd64/$(BINARY_NAME) ./src
-	GOOS=linux   GOARCH=arm64 go build $(LDFLAGS) -o bin/linux-arm64/$(BINARY_NAME) ./src
-	GOOS=windows GOARCH=amd64 go build $(LDFLAGS) -o bin/windows-amd64/$(BINARY_NAME).exe ./src
+    mkdir -p bin/darwin-amd64 bin/darwin-arm64 bin/linux-amd64 bin/linux-arm64 bin/windows-amd64
+    GOOS=darwin  GOARCH=amd64 go build $(GOFLAGS) $(LDFLAGS) -o bin/darwin-amd64/$(BINARY_NAME) ./src
+    GOOS=darwin  GOARCH=arm64 go build $(GOFLAGS) $(LDFLAGS) -o bin/darwin-arm64/$(BINARY_NAME) ./src
+    GOOS=linux   GOARCH=amd64 go build $(GOFLAGS) $(LDFLAGS) -o bin/linux-amd64/$(BINARY_NAME) ./src
+    GOOS=linux   GOARCH=arm64 go build $(GOFLAGS) $(LDFLAGS) -o bin/linux-arm64/$(BINARY_NAME) ./src
+    GOOS=windows GOARCH=amd64 go build $(GOFLAGS) $(LDFLAGS) -o bin/windows-amd64/$(BINARY_NAME).exe ./src
 
 # Run tests
 test:
