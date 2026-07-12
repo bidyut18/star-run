@@ -1,160 +1,141 @@
 #!/usr/bin/env node
 /**
- * Package Go binaries into npm platform-specific tarballs.
+ * build-npm.js — Generate npm packages from Go cross-compiled binaries.
  *
- * Prerequisites:
- *   make build-all
- *
- * Usage:
- *   node scripts/build-npm.js
- *
- * Publish order:
- *   1. Platform packages first
- *   2. Main package last
+ * Prerequisites: make build-all
+ * Usage: node scripts/build-npm.js
  */
 
 const fs = require("fs");
 const path = require("path");
 
-const NPM_SCOPE = "@bidyut26";              
+// ─── CONFIG ─────────────────────────────────────────────
+const NPM_SCOPE     = "@bidyut26";
+const GITHUB_USER   = "bidyut18";
+const REPO          = `${GITHUB_USER}/cat-run`;
+const REPO_URL      = `https://github.com/${REPO}`;
+const AUTHOR        = "Bidyut Mahanta <bidyutmahanta7768@outlook.com>";
+
 const rootPkg = require("../package.json");
-const version = rootPkg.version;
+const VERSION = rootPkg.version;
 
-const author = "Bidyut Mahanta <bidyutmahanta7768@outlook.com>";
-const repoUrl = "https://github.com/bidyut18/cat-run";
-
-const targets = [
-  { platform: "darwin", arch: "x64", binDir: "darwin-amd64" },
-  { platform: "darwin", arch: "arm64", binDir: "darwin-arm64" },
-  { platform: "linux", arch: "x64", binDir: "linux-amd64" },
-  { platform: "linux", arch: "arm64", binDir: "linux-arm64" },
-  { platform: "win32", arch: "x64", binDir: "windows-amd64" },
+// Map Go build output dirs → Node os.platform() / os.arch()
+const TARGETS = [
+  { platform: "darwin",  arch: "x64",  binDir: "darwin-amd64",  bin: "cat-run"      },
+  { platform: "darwin",  arch: "arm64", binDir: "darwin-arm64",  bin: "cat-run"      },
+  { platform: "linux",   arch: "x64",  binDir: "linux-amd64",   bin: "cat-run"      },
+  { platform: "linux",   arch: "arm64", binDir: "linux-arm64",   bin: "cat-run"      },
+  { platform: "win32",   arch: "x64",  binDir: "windows-amd64", bin: "cat-run.exe"  },
 ];
 
-const npmDir = path.join(__dirname, "..", "npm");
-const binDir = path.join(__dirname, "..", "bin");
+// ─── PATHS ──────────────────────────────────────────────
+const ROOT_DIR = path.resolve(__dirname, "..");
+const NPM_DIR  = path.join(ROOT_DIR, "npm");
+const BIN_DIR  = path.join(ROOT_DIR, "bin");
 
-let missingCount = 0;
+// ─── HELPERS ────────────────────────────────────────────
+function rmrf(dir) {
+  if (fs.existsSync(dir)) fs.rmSync(dir, { recursive: true, force: true });
+}
+
+function writeJson(file, data) {
+  fs.writeFileSync(file, JSON.stringify(data, null, 2) + "\n");
+}
+
+function copyExecutable(src, dst) {
+  fs.copyFileSync(src, dst);
+  fs.chmodSync(dst, 0o755);
+}
+
+// ─── BUILD ──────────────────────────────────────────────
+rmrf(NPM_DIR);
+fs.mkdirSync(NPM_DIR, { recursive: true });
+
 const optionalDeps = {};
+let missing = 0;
 
-// ---- 1. Create platform packages ----
-for (const target of targets) {
-  const pkgName = `${NPM_SCOPE}/cat-run-${target.platform}-${target.arch}`;
-  const dirName = `cat-run-${target.platform}-${target.arch}`;
-  const pkgDir = path.join(npmDir, dirName);
+// 1. Platform-specific binary packages
+for (const t of TARGETS) {
+  const pkgName = `${NPM_SCOPE}/cat-run-${t.platform}-${t.arch}`;
+  const dirName = `cat-run-${t.platform}-${t.arch}`;
+  const pkgDir  = path.join(NPM_DIR, dirName);
   fs.mkdirSync(pkgDir, { recursive: true });
 
-  const binaryName = target.platform === "win32" ? "cat-run.exe" : "cat-run";
-  const srcBinary = path.join(binDir, target.binDir, binaryName);
-  const destBinary = path.join(pkgDir, binaryName);
+  const srcBin = path.join(BIN_DIR, t.binDir, t.bin);
+  const dstBin = path.join(pkgDir, t.bin);
 
-  if (!fs.existsSync(srcBinary)) {
-    console.warn(
-      `⚠️  Missing: ${target.binDir}/${binaryName} (run: make build-all)`,
-    );
-    missingCount++;
+  if (!fs.existsSync(srcBin)) {
+    console.warn(`⚠️  Missing binary: ${t.binDir}/${t.bin}`);
+    missing++;
     continue;
   }
 
-  fs.copyFileSync(srcBinary, destBinary);
-  fs.chmodSync(destBinary, 0o755);
+  copyExecutable(srcBin, dstBin);
 
-  const pkgJson = {
+  writeJson(path.join(pkgDir, "package.json"), {
     name: pkgName,
-    version: version,
-    description: `cat-run binary for ${target.platform}-${target.arch}`,
-    author,
-    os: [target.platform],
-    cpu: [target.arch],
-    files: [binaryName, "README.md"],
+    version: VERSION,
+    description: `cat-run binary for ${t.platform} ${t.arch}`,
+    author: AUTHOR,
     license: "MIT",
-    repository: {
-      type: "git",
-      url: `${repoUrl}.git`,
-    },
-    homepage: repoUrl,
-    publishConfig: {
-      access: "public"
-    }
-  };
+    os: [t.platform],
+    cpu: [t.arch],
+    files: [t.bin, "README.md"],
+    repository: { type: "git", url: `${REPO_URL}.git` },
+    homepage: REPO_URL,
+    publishConfig: { access: "public" },
+  });
 
   fs.writeFileSync(
-    path.join(pkgDir, "package.json"),
-    JSON.stringify(pkgJson, null, 2) + "\n",
+    path.join(pkgDir, "README.md"),
+    `# ${pkgName}\n\nPlatform-specific binary for [cat-run](${REPO_URL}) on ${t.platform} ${t.arch}.\n`
   );
 
-  // README.md required to avoid npm spam detection
-  const readme = `# ${pkgName}\n\nPlatform-specific binary for [cat-run](${repoUrl}) on ${target.platform} ${target.arch}.\n`;
-  fs.writeFileSync(path.join(pkgDir, "README.md"), readme);
-
-  optionalDeps[pkgName] = version;
-  console.log(`✅  Created ${pkgName} (v${version})`);
+  optionalDeps[pkgName] = VERSION;
+  console.log(`✅  ${pkgName}`);
 }
 
-if (missingCount > 0) {
-  console.warn(`\n⚠️  ${missingCount} binary(s) missing. Run: make build-all`);
+if (missing > 0) {
+  console.error(`\n❌ ${missing} binary(s) missing. Run: make build-all`);
   process.exit(1);
 }
 
-// ---- 2. Create main wrapper package ----
-function createMainWrapper() {
-  const mainDir = path.join(npmDir, "cat-run");
-  fs.mkdirSync(mainDir, { recursive: true });
+// 2. Main wrapper package
+const mainDir = path.join(NPM_DIR, "cat-run");
+fs.mkdirSync(mainDir, { recursive: true });
 
-  const srcIndex = path.join(__dirname, "..", "index.js");
-  if (fs.existsSync(srcIndex)) {
-    fs.copyFileSync(srcIndex, path.join(mainDir, "index.js"));
-    fs.chmodSync(path.join(mainDir, "index.js"), 0o755);
-    console.log("✅  Copied index.js");
-  } else {
-    console.warn(
-      "⚠️  index.js not found at project root; make sure to place it there.",
-    );
-  }
+// Copy launcher script
+const srcIndex = path.join(ROOT_DIR, "index.js");
+if (!fs.existsSync(srcIndex)) {
+  console.error("❌ index.js not found at project root");
+  process.exit(1);
+}
+fs.copyFileSync(srcIndex, path.join(mainDir, "index.js"));
+fs.chmodSync(path.join(mainDir, "index.js"), 0o755);
 
-  const pkgJson = {
-    name: "cat-run",
-    version: version,
-    description:
-      "Universal package manager script runner — fast Go binary distributed via npm",
-    main: "index.js",
-    bin: { "cat-run": "index.js" },
-    files: ["index.js", "README.md", "LICENSE"],
-    optionalDependencies: optionalDeps,
-    keywords: [
-      "cli",
-      "package-manager",
-      "npm",
-      "yarn",
-      "pnpm",
-      "bun",
-      "runner",
-      "go",
-    ],
-    author: author,
-    license: "MIT",
-    repository: {
-      type: "git",
-      url: `${repoUrl}.git`,
-    },
-    bugs: { url: `${repoUrl}/issues` },
-    homepage: `${repoUrl}#readme`,
-    engines: { node: ">=16" },
-    publishConfig: {
-      access: "public"
-    }
-  };
-
-  fs.writeFileSync(
-    path.join(mainDir, "package.json"),
-    JSON.stringify(pkgJson, null, 2) + "\n",
-  );
-
-  console.log(`✅  Created main wrapper (v${version})`);
+// Copy README + LICENSE for the wrapper
+for (const file of ["README.md", "LICENSE"]) {
+  const src = path.join(ROOT_DIR, file);
+  if (fs.existsSync(src)) fs.copyFileSync(src, path.join(mainDir, file));
 }
 
-createMainWrapper();
+writeJson(path.join(mainDir, "package.json"), {
+  name: "cat-run",
+  version: VERSION,
+  description: "Universal package manager script runner — fast Go binary distributed via npm",
+  main: "index.js",
+  bin: { "cat-run": "index.js" },
+  files: ["index.js", "README.md", "LICENSE"],
+  optionalDependencies: optionalDeps,
+  keywords: ["cli", "package-manager", "npm", "yarn", "pnpm", "bun", "runner", "go"],
+  author: AUTHOR,
+  license: "MIT",
+  repository: { type: "git", url: `${REPO_URL}.git` },
+  bugs: { url: `${REPO_URL}/issues` },
+  homepage: `${REPO_URL}#readme`,
+  engines: { node: ">=16" },
+  publishConfig: { access: "public" },
+});
 
-console.log("\n✅  Done! Publish order:");
-console.log("    1. npm/cat-run-* (platform packages)");
-console.log("    2. npm/cat-run (main wrapper)");
+console.log(`✅  cat-run wrapper (v${VERSION})`);
+console.log("\n📦 Publish order: platform packages → cat-run wrapper");

@@ -1,7 +1,33 @@
 {
   "name": "cat-run",
   "version": "0.0.1",
-  "description": "Universal package manager script runner for JS/TS projects fast, zero config, distributed via npm",
+  "description": "Universal package manager script runner for JS/TS projects — fast, zero config, distributed via npm",
+  "main": "index.js",
+  "bin": {
+    "cat-run": "index.js"
+  },
+  "files": [
+    "index.js",
+    "README.md",
+    "LICENSE"
+  ],
+  "scripts": {
+    "build": "go build -ldflags=\"-s -w\" -o bin/cat-run ./src",
+    "build:all": "make build-all",
+    "package:npm": "make package-npm",
+    "test": "go test -v ./...",
+    "lint": "golangci-lint run",
+    "clean": "rm -rf bin/ npm/ dist/",
+    "precommit": "npm run lint && npm run test"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/bidyut18/cat-run.git"
+  },
+  "bugs": {
+    "url": "https://github.com/bidyut18/cat-run/issues"
+  },
+  "homepage": "https://github.com/bidyut18/cat-run#readme",
   "keywords": [
     "runner",
     "package-manager",
@@ -13,21 +39,7 @@
     "cli"
   ],
   "license": "MIT",
-  "author": "Bidyut Mahanta bidyutmahanta7768@outlook.com",
-  "scripts": {
-    "build": "go build -ldflags=\"-s -w\" -o bin/cat-run ./src",
-    "build:all": "make build-all",
-    "package:npm": "make package-npm",
-    "test": "go test -v ./...",
-    "lint": "golangci-lint run",
-    "clean": "rm -rf bin/ dist/",
-    "precommit": "npm run lint && npm run test"
-  },
-  
-  "repository": {
-    "type": "git",
-    "url": "git+https://github.com/bidyut18/cat-run.git"
-  },
+  "author": "Bidyut Mahanta <bidyutmahanta7768@outlook.com>",
   "engines": {
     "node": ">=16.0.0",
     "npm": ">=7.0.0"
