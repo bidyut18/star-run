@@ -12,7 +12,8 @@ npm/*/*.tgz
 npm/*/package-lock.json
 npm/cat-run/bin/**
 node_modules/
-
+npm/**
+bin/**
 coverage/
 *.cover
 *.cov
@@ -35,5 +36,5 @@ yarn-error.log*
 .env
 .env.local
 # Build artifacts
-npm/
+
 dist/
