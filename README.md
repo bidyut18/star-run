@@ -16,6 +16,7 @@ Stop trying to remember whether the current repository uses `npm`, `yarn`, `pnpm
 - 🧠 **Smart detection** – automatically traverses parent directories to identify the correct environment.
 - 📡 **Signal forwarding** – gracefully handles `SIGINT`/`SIGTERM` to safely shut down running scripts.
 - 📦 **Trivial distribution** – installs as a standalone static binary natively via npm.
+- 🚫 **Zero config** – Works out of the box. No configuration files needed.
 
 ---
 
@@ -43,3 +44,7 @@ cat-run --list
 ### Show the detected package manager without executing anything
 
 cat-run --detect
+
+
+## 📄 License
+This project is licensed under the MIT License – see the LICENSE file for details.
