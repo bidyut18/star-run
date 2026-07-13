@@ -139,9 +139,9 @@ func (s *ScriptService) ListScripts(startDir string, pm PackageManager, stopDir 
 	return s.Renderer.Render(pm, scripts)
 }
 
-// ValidateScript checks that a given script name exists in the nearest package.json.
-func (s *ScriptService) ValidateScript(startDir, scriptName string) error {
-	pkgPath, err := s.Locator.Find(startDir, "")
+
+func (s *ScriptService) ValidateScript(startDir, stopDir, scriptName string) error {
+	pkgPath, err := s.Locator.Find(startDir, stopDir)
 	if err != nil {
 		return err
 	}

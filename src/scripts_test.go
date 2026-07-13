@@ -98,7 +98,6 @@ func TestListScriptsNoPackageJson(t *testing.T) {
 }
 
 // ─── NEW: ValidateScript tests ───
-
 func TestValidateScriptExists(t *testing.T) {
 	tmpDir := t.TempDir()
 
@@ -107,7 +106,7 @@ func TestValidateScriptExists(t *testing.T) {
 	_ = os.WriteFile(filepath.Join(tmpDir, "package.json"), data, 0644)
 
 	svc := ScriptService{Locator: PackageLocator{}, Reader: PackageReader{}}
-	if err := svc.ValidateScript(tmpDir, "build"); err != nil {
+	if err := svc.ValidateScript(tmpDir, tmpDir, "build"); err != nil {
 		t.Fatalf("expected 'build' to exist, got: %v", err)
 	}
 }
@@ -120,7 +119,7 @@ func TestValidateScriptMissing(t *testing.T) {
 	_ = os.WriteFile(filepath.Join(tmpDir, "package.json"), data, 0644)
 
 	svc := ScriptService{Locator: PackageLocator{}, Reader: PackageReader{}}
-	err := svc.ValidateScript(tmpDir, "deploy")
+	err := svc.ValidateScript(tmpDir, tmpDir, "deploy")
 	if err == nil {
 		t.Fatal("expected error for missing script, got nil")
 	}
@@ -134,7 +133,7 @@ func TestValidateScriptNoPackageJson(t *testing.T) {
 	tmpDir := t.TempDir()
 
 	svc := ScriptService{Locator: PackageLocator{}, Reader: PackageReader{}}
-	err := svc.ValidateScript(tmpDir, "build")
+	err := svc.ValidateScript(tmpDir, tmpDir, "build")
 	if !errors.Is(err, ErrPackageNotFound) {
 		t.Fatalf("expected ErrPackageNotFound, got %v", err)
 	}

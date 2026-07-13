@@ -79,9 +79,8 @@ func main() {
 
 		scriptName := args[0]
 
-		// Pre-flight: fail fast if script is missing
 		svc := ScriptService{Locator: PackageLocator{}, Reader: PackageReader{}}
-		if err := svc.ValidateScript(cwd, scriptName); err != nil {
+		if err := svc.ValidateScript(cwd, "", scriptName); err != nil {
 			fatalf("Error: %v\n", err)
 		}
 

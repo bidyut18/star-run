@@ -1,4 +1,4 @@
-version: "3"
+version: '3'
 
 vars:
   BINARY_NAME: star-run
@@ -7,6 +7,8 @@ vars:
   VERSION:
     sh: node -p "require('./package.json').version" 2>/dev/null || echo "dev"
   LDFLAGS: -s -w -X main.version={{.VERSION}}
+  # Windows needs .exe; Unix does not.
+  EXT: '{{if eq OS "windows"}}.exe{{end}}'
 
 env:
   GOFLAGS: -buildvcs=false
@@ -20,14 +22,14 @@ tasks:
   build:
     desc: Build the binary for the current host platform
     sources:
-      - "{{.SRC_DIR}}/**/*.go"
+      - '{{.SRC_DIR}}/**/*.go'
       - go.mod
       - go.sum
     generates:
-      - "{{.BIN_DIR}}/{{.BINARY_NAME}}"
+      - '{{.BIN_DIR}}/{{.BINARY_NAME}}{{.EXT}}'
     cmds:
       - mkdir -p {{.BIN_DIR}}
-      - go build -ldflags="{{.LDFLAGS}}" -o {{.BIN_DIR}}/{{.BINARY_NAME}} {{.SRC_DIR}}
+      - go build -ldflags="{{.LDFLAGS}}" -o {{.BIN_DIR}}/{{.BINARY_NAME}}{{.EXT}} {{.SRC_DIR}}
 
   build-all:
     desc: Build binaries for all supported target platforms
@@ -45,13 +47,13 @@ tasks:
     internal: true
     vars:
       PARTS: '{{splitList "|" .ITEM}}'
-      DIR: "{{index .PARTS 0}}"
-      GOOS: "{{index .PARTS 1}}"
-      GOARCH: "{{index .PARTS 2}}"
-      BIN: "{{index .PARTS 3}}"
+      DIR: '{{index .PARTS 0}}'
+      GOOS: '{{index .PARTS 1}}'
+      GOARCH: '{{index .PARTS 2}}'
+      BIN: '{{index .PARTS 3}}'
     env:
-      GOOS: "{{.GOOS}}"
-      GOARCH: "{{.GOARCH}}"
+      GOOS: '{{.GOOS}}'
+      GOARCH: '{{.GOARCH}}'
     cmds:
       - echo "Building {{.DIR}} (GOOS={{.GOOS}} GOARCH={{.GOARCH}})..."
       - mkdir -p {{.BIN_DIR}}/{{.DIR}}
