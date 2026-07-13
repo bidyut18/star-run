@@ -8,10 +8,11 @@ import (
 
 func TestDetectPackageManager(t *testing.T) {
 	tests := []struct {
-		name        string
-		files       map[string]string 
-		expected    PackageManager
-		expectError bool
+		name          string
+		files         map[string]string
+		expected      PackageManager
+		expectWarning string
+		expectError   bool
 	}{
 		{
 			name: "packageManager field npm",
@@ -82,12 +83,12 @@ func TestDetectPackageManager(t *testing.T) {
 				"package.json":      `{"packageManager": "unknown"}`,
 				"package-lock.json": `{}`,
 			},
-			expected: Npm, 
+			expected: Npm,
 		},
 		{
 			name:        "no package manager",
 			files:       map[string]string{},
-			expected:    -1,
+			expected:    "",
 			expectError: true,
 		},
 		{
@@ -98,14 +99,31 @@ func TestDetectPackageManager(t *testing.T) {
 			},
 			expected: Npm,
 		},
+		// ─── NEW: warning cases ───
+		{
+			name: "packageManager npm with conflicting yarn.lock",
+			files: map[string]string{
+				"package.json": `{"packageManager": "npm@10.0.0"}`,
+				"yarn.lock":    ``,
+			},
+			expected:      Npm,
+			expectWarning: "⚠️  packageManager says npm, but found yarn.lock",
+		},
+		{
+			name: "multiple lockfiles prefers npm",
+			files: map[string]string{
+				"package-lock.json": `{}`,
+				"yarn.lock":         ``,
+			},
+			expected:      Npm,
+			expectWarning: "⚠️  Multiple lockfiles found (package-lock.json, yarn.lock); using npm",
+		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			// Create a temporary directory
 			tmpDir := t.TempDir()
 
-			// Write files
 			for relPath, content := range tt.files {
 				fullPath := filepath.Join(tmpDir, relPath)
 				if err := os.MkdirAll(filepath.Dir(fullPath), 0755); err != nil {
@@ -121,7 +139,7 @@ func TestDetectPackageManager(t *testing.T) {
 				startDir = filepath.Join(tmpDir, "subdir")
 			}
 
-			pm, err := detectPackageManager(startDir,tmpDir)
+			pm, warning, err := detectPackageManager(startDir, tmpDir)
 			if tt.expectError {
 				if err == nil {
 					t.Errorf("expected error, got nil")
@@ -132,7 +150,10 @@ func TestDetectPackageManager(t *testing.T) {
 				t.Fatalf("unexpected error: %v", err)
 			}
 			if pm != tt.expected {
-				t.Errorf("expected %v, got %v", tt.expected, pm)
+				t.Errorf("expected PM %v, got %v", tt.expected, pm)
+			}
+			if warning != tt.expectWarning {
+				t.Errorf("expected warning %q, got %q", tt.expectWarning, warning)
 			}
 		})
 	}

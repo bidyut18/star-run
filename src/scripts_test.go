@@ -3,8 +3,8 @@ package main
 import (
 	"bytes"
 	"encoding/json"
+	"errors"
 	"os"
-	"os/exec" 
 	"path/filepath"
 	"testing"
 )
@@ -20,31 +20,27 @@ func TestListScripts(t *testing.T) {
 		"format": "prettier --write .",
 	}
 
-	pkg := PackageJSON{
-		PackageManager: "",
-		Scripts:        scripts,
-	}
+	pkg := PackageJSON{Scripts: scripts}
 	pkgData, err := json.Marshal(pkg)
 	if err != nil {
 		t.Fatal(err)
 	}
 
-	pkgPath := filepath.Join(tmpDir, "package.json")
-	if err := os.WriteFile(pkgPath, pkgData, 0644); err != nil {
+	if err := os.WriteFile(filepath.Join(tmpDir, "package.json"), pkgData, 0644); err != nil {
 		t.Fatal(err)
 	}
 
-	oldStdout := os.Stdout
-	r, w, _ := os.Pipe()
-	os.Stdout = w
-
-	listScripts(tmpDir, Npm, tmpDir)
-
-	w.Close()
-	os.Stdout = oldStdout
-
 	var buf bytes.Buffer
-	_, _ = buf.ReadFrom(r)
+	svc := ScriptService{
+		Locator:  PackageLocator{},
+		Reader:   PackageReader{},
+		Renderer: ScriptRenderer{Writer: &buf},
+	}
+
+	if err := svc.ListScripts(tmpDir, Npm, tmpDir); err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
 	output := buf.String()
 
 	for name, cmd := range scripts {
@@ -67,17 +63,17 @@ func TestListScriptsNoScripts(t *testing.T) {
 	pkgData, _ := json.Marshal(pkg)
 	_ = os.WriteFile(filepath.Join(tmpDir, "package.json"), pkgData, 0644)
 
-	oldStdout := os.Stdout
-	r, w, _ := os.Pipe()
-	os.Stdout = w
-
-	listScripts(tmpDir, Npm, tmpDir)
-
-	w.Close()
-	os.Stdout = oldStdout
-
 	var buf bytes.Buffer
-	_, _ = buf.ReadFrom(r)
+	svc := ScriptService{
+		Locator:  PackageLocator{},
+		Reader:   PackageReader{},
+		Renderer: ScriptRenderer{Writer: &buf},
+	}
+
+	if err := svc.ListScripts(tmpDir, Npm, tmpDir); err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
 	output := buf.String()
 
 	if !bytes.Contains([]byte(output), []byte("No scripts found")) {
@@ -85,25 +81,61 @@ func TestListScriptsNoScripts(t *testing.T) {
 	}
 }
 
-func TestListScriptsNoPackageJsonSubprocess(t *testing.T) {
-	if os.Getenv("TEST_SUBPROCESS") == "1" {
-		// Use a single temp dir for both start and stop
-		tmpDir := os.Getenv("TEST_TMP_DIR")
-		if tmpDir == "" {
-			tmpDir = t.TempDir() // fallback
-		}
-		listScripts(tmpDir, Npm, tmpDir)
-		return
-	}
+func TestListScriptsNoPackageJson(t *testing.T) {
 	tmpDir := t.TempDir()
-	cmd := exec.Command(os.Args[0], "-test.run=TestListScriptsNoPackageJsonSubprocess")
-	cmd.Env = append(os.Environ(), "TEST_SUBPROCESS=1", "TEST_TMP_DIR="+tmpDir)
-	out, err := cmd.CombinedOutput()
-	if err == nil {
-		t.Error("expected error (exit code 1)")
+
+	var buf bytes.Buffer
+	svc := ScriptService{
+		Locator:  PackageLocator{},
+		Reader:   PackageReader{},
+		Renderer: ScriptRenderer{Writer: &buf},
 	}
-	expected := "Error: No package.json found in tree."
-	if !bytes.Contains(out, []byte(expected)) {
-		t.Errorf("expected stderr to contain %q, got %q", expected, string(out))
+
+	err := svc.ListScripts(tmpDir, Npm, tmpDir)
+	if !errors.Is(err, ErrPackageNotFound) {
+		t.Fatalf("expected ErrPackageNotFound, got %v", err)
+	}
+}
+
+// ─── NEW: ValidateScript tests ───
+
+func TestValidateScriptExists(t *testing.T) {
+	tmpDir := t.TempDir()
+
+	pkg := PackageJSON{Scripts: map[string]string{"build": "tsc"}}
+	data, _ := json.Marshal(pkg)
+	_ = os.WriteFile(filepath.Join(tmpDir, "package.json"), data, 0644)
+
+	svc := ScriptService{Locator: PackageLocator{}, Reader: PackageReader{}}
+	if err := svc.ValidateScript(tmpDir, "build"); err != nil {
+		t.Fatalf("expected 'build' to exist, got: %v", err)
+	}
+}
+
+func TestValidateScriptMissing(t *testing.T) {
+	tmpDir := t.TempDir()
+
+	pkg := PackageJSON{Scripts: map[string]string{"build": "tsc"}}
+	data, _ := json.Marshal(pkg)
+	_ = os.WriteFile(filepath.Join(tmpDir, "package.json"), data, 0644)
+
+	svc := ScriptService{Locator: PackageLocator{}, Reader: PackageReader{}}
+	err := svc.ValidateScript(tmpDir, "deploy")
+	if err == nil {
+		t.Fatal("expected error for missing script, got nil")
+	}
+	want := "script 'deploy' not found in package.json"
+	if err.Error() != want {
+		t.Errorf("expected %q, got %q", want, err.Error())
+	}
+}
+
+func TestValidateScriptNoPackageJson(t *testing.T) {
+	tmpDir := t.TempDir()
+
+	svc := ScriptService{Locator: PackageLocator{}, Reader: PackageReader{}}
+	err := svc.ValidateScript(tmpDir, "build")
+	if !errors.Is(err, ErrPackageNotFound) {
+		t.Fatalf("expected ErrPackageNotFound, got %v", err)
 	}
 }

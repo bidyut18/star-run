@@ -5,6 +5,7 @@
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](https://opensource.org/licenses/MIT)
 [![Go Version](https://img.shields.io/badge/Go-1.21+-00ADD8?logo=go)](https://go.dev/)
 [![npm version](https://img.shields.io/npm/v/star-run)](https://www.npmjs.com/package/star-run)
+![status](https://img.shields.io/badge/status-alpha-orange)
 
 Stop trying to remember whether the current repository uses `npm`, `yarn`, `pnpm`, or `bun`. Just type `star-run dev` and let the runner instantly figure it out for you.
 
@@ -25,6 +26,10 @@ Stop trying to remember whether the current repository uses `npm`, `yarn`, `pnpm
 ```bash
 npm install -g star-run
 ```
+# Note 
+
+> This package is in 🚀 **alpha**. The API can and will change without warning.
+
 
 ## Usage
 

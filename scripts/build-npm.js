@@ -1,20 +1,13 @@
-#!/usr/bin/env node
-/**
- * build-npm.js — Generate npm packages from Go cross-compiled binaries.
- *
- * Prerequisites: make build-all
- * Usage: node scripts/build-npm.js
- */
-
 const fs = require("fs");
 const path = require("path");
+const crypto = require("crypto");
 
 // ─── CONFIG ─────────────────────────────────────────────
-const NPM_SCOPE     = "@bidyut26";
-const GITHUB_USER   = "bidyut18";
-const REPO          = `${GITHUB_USER}/star-run`;
-const REPO_URL      = `https://github.com/${REPO}`;
-const AUTHOR        = "Bidyut Mahanta <bidyutmahanta7768@outlook.com>";
+const NPM_SCOPE   = "@bidyut26";
+const GITHUB_USER = "bidyut18";
+const REPO        = `${GITHUB_USER}/star-run`;
+const REPO_URL    = `https://github.com/${REPO}`;
+const AUTHOR      = "Bidyut Mahanta <bidyutmahanta7768@outlook.com>";
 
 const rootPkg = require("../package.json");
 const VERSION = rootPkg.version;
@@ -43,7 +36,13 @@ function writeJson(file, data) {
 
 function copyExecutable(src, dst) {
   fs.copyFileSync(src, dst);
-  fs.chmodSync(dst, 0o755);
+  if (process.platform !== "win32") {
+    fs.chmodSync(dst, 0o755);
+  }
+}
+
+function sha256(file) {
+  return crypto.createHash("sha256").update(fs.readFileSync(file)).digest("hex");
 }
 
 // ─── BUILD ──────────────────────────────────────────────
@@ -53,7 +52,6 @@ fs.mkdirSync(NPM_DIR, { recursive: true });
 const optionalDeps = {};
 let missing = 0;
 
-// 1. Platform-specific binary packages
 for (const t of TARGETS) {
   const pkgName = `${NPM_SCOPE}/star-run-${t.platform}-${t.arch}`;
   const dirName = `star-run-${t.platform}-${t.arch}`;
@@ -71,6 +69,8 @@ for (const t of TARGETS) {
 
   copyExecutable(srcBin, dstBin);
 
+  const checksum = sha256(dstBin);
+
   writeJson(path.join(pkgDir, "package.json"), {
     name: pkgName,
     version: VERSION,
@@ -83,6 +83,7 @@ for (const t of TARGETS) {
     repository: { type: "git", url: `${REPO_URL}.git` },
     homepage: REPO_URL,
     publishConfig: { access: "public" },
+    starRunChecksum: checksum,
   });
 
   fs.writeFileSync(
@@ -99,20 +100,19 @@ if (missing > 0) {
   process.exit(1);
 }
 
-// 2. Main wrapper package
 const mainDir = path.join(NPM_DIR, "star-run");
 fs.mkdirSync(mainDir, { recursive: true });
 
-// Copy launcher script
 const srcIndex = path.join(ROOT_DIR, "index.js");
 if (!fs.existsSync(srcIndex)) {
   console.error("❌ index.js not found at project root");
   process.exit(1);
 }
 fs.copyFileSync(srcIndex, path.join(mainDir, "index.js"));
-fs.chmodSync(path.join(mainDir, "index.js"), 0o755);
+if (process.platform !== "win32") {
+  fs.chmodSync(path.join(mainDir, "index.js"), 0o755);
+}
 
-// Copy README + LICENSE for the wrapper
 for (const file of ["README.md", "LICENSE"]) {
   const src = path.join(ROOT_DIR, file);
   if (fs.existsSync(src)) fs.copyFileSync(src, path.join(mainDir, file));

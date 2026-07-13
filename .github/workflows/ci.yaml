@@ -2,9 +2,9 @@ name: CI
 
 on:
   push:
-    branches: [main, master]
+    branches: [release]
   pull_request:
-    branches: [main, master]
+    branches: [release]
 
 jobs:
   test:
@@ -13,8 +13,6 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
 
       - name: Set up Go
         uses: actions/setup-go@v5
@@ -25,8 +23,13 @@ jobs:
       - name: Set up Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: '20'
+          node-version: '24'
           cache: 'npm'       
+
+      - name: Install Task
+        uses: arduino/setup-task@v3
+        with:
+          version: 3.x
 
       - name: Run golangci-lint
         uses: golangci/golangci-lint-action@v6
@@ -36,7 +39,7 @@ jobs:
         continue-on-error: true
 
       - name: Run tests
-        run: go test -v ./src/...
+        run: task test
 
       - name: Build binaries
-        run: make build-all
+        run: task build-all

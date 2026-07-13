@@ -3,6 +3,7 @@ bin/.gitkeep
 *.exe
 *.test
 *.out
+.task/**
 vendor/
 go.work
 go.work.sum

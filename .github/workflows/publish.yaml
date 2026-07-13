@@ -2,64 +2,70 @@ name: Publish to npm
 
 on:
   push:
-    branches: ["release"]
-
-    tags:
-      - "v*"
+    branches:
+      - release
   workflow_dispatch:
 
 jobs:
   publish:
     runs-on: ubuntu-latest
-    container:
-      image: alpine:latest
 
     steps:
-      - name: Install dependencies
-        run: |
-          apk add --no-cache \
-            make \
-            git \
-            go \
-            nodejs \
-            npm \
-            bash
-
       - name: Checkout code
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0 # Crucial: fetches full history so git can inspect tracking branches
 
-      - name: Configure Git Safe Directory
-        run: git config --global --add safe.directory "$GITHUB_WORKSPACE"
+      - name: Verify Tag Exists on Release Branch
+        id: branch-filter
+        run: |
+          # Query the remote tracking branches to see if origin/release owns this tag's commit
+          if git branch -r --contains ${{ github.ref_name }} | grep -q 'origin/release'; then
+            echo "Target tag belongs to the release branch. Proceeding."
+            echo "is_release=true" >> $GITHUB_OUTPUT
+          else
+            echo "Tag was created outside of the release branch. Skipping execution."
+            echo "is_release=false" >> $GITHUB_OUTPUT
+          fi
 
-      - name: Build all binaries (cross platform)
-        run: make build-all
+      - name: Set up Go
+        if: steps.branch-filter.outputs.is_release == 'true'
+        uses: actions/setup-go@v5
+        with:
+          go-version: "1.26.3"
+          cache: true
+
+      - name: Set up Node.js
+        if: steps.branch-filter.outputs.is_release == 'true'
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: "npm"
+
+      - name: Install Task
+        if: steps.branch-filter.outputs.is_release == 'true'
+        uses: arduino/setup-task@v3
+        with:
+          version: 3.x
 
       - name: Package npm tarballs
-        run: make package-npm
+        if: steps.branch-filter.outputs.is_release == 'true'
+        run: task package-npm
 
-      # We inject the secret directly into the token variable inside .npmrc
       - name: Setup npm authentication
+        if: steps.branch-filter.outputs.is_release == 'true'
         run: |
           echo "//registry.npmjs.org/:_authToken=\${NPM_TOKEN}" > ~/.npmrc
         env:
           NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
 
-      # Note the env variable name change to match what's inside .npmrc
-      - name: Publish platform specific packages
+      - name: Publish packages to NPM
+        if: steps.branch-filter.outputs.is_release == 'true'
         run: |
-          cd npm
-          for pkg in star-run-*/; do
-            cd "$pkg"
-            npm publish --access public
-            cd ..
+          for dir in npm/star-run-*/ npm/star-run/; do
+            if [ -d "$dir" ]; then
+              cd "$dir" && npm publish --access public && cd -
+            fi
           done
-        env:
-          NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
-
-      # Publish the main wrapper
-      - name: Publish main wrapper
-        run: |
-          cd npm/star-run
-          npm publish --access public
         env:
           NPM_TOKEN: ${{ secrets.NPM_TOKEN }}

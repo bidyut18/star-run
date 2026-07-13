@@ -1,0 +1,98 @@
+version: "3"
+
+vars:
+  BINARY_NAME: star-run
+  SRC_DIR: ./src
+  BIN_DIR: ./bin
+  VERSION:
+    sh: node -p "require('./package.json').version" 2>/dev/null || echo "dev"
+  LDFLAGS: -s -w -X main.version={{.VERSION}}
+
+env:
+  GOFLAGS: -buildvcs=false
+
+tasks:
+  default:
+    desc: Run the default local build
+    cmds:
+      - task: build
+
+  build:
+    desc: Build the binary for the current host platform
+    sources:
+      - "{{.SRC_DIR}}/**/*.go"
+      - go.mod
+      - go.sum
+    generates:
+      - "{{.BIN_DIR}}/{{.BINARY_NAME}}"
+    cmds:
+      - mkdir -p {{.BIN_DIR}}
+      - go build -ldflags="{{.LDFLAGS}}" -o {{.BIN_DIR}}/{{.BINARY_NAME}} {{.SRC_DIR}}
+
+  build-all:
+    desc: Build binaries for all supported target platforms
+    deps: [clean-bin]
+    cmds:
+      - task: build-target
+        for:
+          - darwin-x64|darwin|amd64|star-run
+          - darwin-arm64|darwin|arm64|star-run
+          - linux-x64|linux|amd64|star-run
+          - linux-arm64|linux|arm64|star-run
+          - win32-x64|windows|amd64|star-run.exe
+
+  build-target:
+    internal: true
+    vars:
+      PARTS: '{{splitList "|" .ITEM}}'
+      DIR: "{{index .PARTS 0}}"
+      GOOS: "{{index .PARTS 1}}"
+      GOARCH: "{{index .PARTS 2}}"
+      BIN: "{{index .PARTS 3}}"
+    env:
+      GOOS: "{{.GOOS}}"
+      GOARCH: "{{.GOARCH}}"
+    cmds:
+      - echo "Building {{.DIR}} (GOOS={{.GOOS}} GOARCH={{.GOARCH}})..."
+      - mkdir -p {{.BIN_DIR}}/{{.DIR}}
+      - go build -ldflags="{{.LDFLAGS}}" -o {{.BIN_DIR}}/{{.DIR}}/{{.BIN}} {{.SRC_DIR}}
+      - echo "✅ {{.DIR}}"
+
+  test:
+    desc: Run project tests
+    cmds:
+      - go test -v ./...
+
+  clean:
+    desc: Clean all build artifacts and generated npm packages
+    deps: [clean-bin]
+    cmds:
+      - rm -rf npm/ dist/
+
+  clean-bin:
+    desc: Clean only the compiled binaries directory
+    cmds:
+      - rm -rf {{.BIN_DIR}}/
+
+  package-npm:
+    desc: Generate NPM distribution packages
+    deps: [build-all]
+    cmds:
+      - node scripts/build-npm.js
+
+  publish-dry:
+    desc: Dry-run publish all generated NPM packages
+    deps: [package-npm]
+    cmds:
+      - |
+        for dir in npm/star-run-*/ npm/star-run/; do
+          if [ -d "$dir" ]; then
+            echo "Dry-running publish for $dir..."
+            (cd "$dir" && npm publish --dry-run)
+          fi
+        done
+
+  version:
+    desc: Print the current version from package.json
+    cmds:
+      - echo "{{.VERSION}}"

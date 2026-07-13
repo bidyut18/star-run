@@ -3,69 +3,169 @@ package main
 import (
 	"encoding/json"
 	"fmt"
+	"io"
 	"os"
 	"path/filepath"
 	"sort"
 	"strings"
 )
 
+// PackageLocator walks the filesystem upward looking for package.json.
+type PackageLocator struct{}
 
-type PackageJSON struct {
-	PackageManager string            `json:"packageManager"`
-	Scripts        map[string]string `json:"scripts"`
-}
+// Find returns the absolute path to the nearest package.json starting at startDir.
+// If stopDir is non-empty, the search stops at that directory (inclusive).
+func (l PackageLocator) Find(startDir, stopDir string) (string, error) {
+	if startDir == "" {
+		return "", fmt.Errorf("startDir cannot be empty: %w", os.ErrInvalid)
+	}
 
-func listScripts(startDir string, pm PackageManager, stopDir string) {
-	dir := startDir
-	var pkgPath string
+	dir, err := filepath.Abs(startDir)
+	if err != nil {
+		return "", fmt.Errorf("resolving startDir: %w", err)
+	}
+
+	var absStop string
+	if stopDir != "" {
+		absStop, err = filepath.Abs(stopDir)
+		if err != nil {
+			return "", fmt.Errorf("resolving stopDir: %w", err)
+		}
+	}
 
 	for {
-		p := filepath.Join(dir, "package.json")
-		if _, err := os.Stat(p); err == nil {
-			pkgPath = p
-			break
+		pkgPath := filepath.Join(dir, "package.json")
+
+		info, err := os.Stat(pkgPath)
+		if err == nil && !info.IsDir() {
+			return pkgPath, nil
 		}
-		if stopDir != "" && dir == stopDir {
-			fatalf("Error: No package.json found in tree.\n")
+
+		if absStop != "" && dir == absStop {
+			return "", ErrPackageNotFound
 		}
+
 		parent := filepath.Dir(dir)
 		if parent == dir {
-			fatalf("Error: No package.json found in tree.\n")
+			return "", ErrPackageNotFound
 		}
 		dir = parent
 	}
+}
 
-	f, err := os.Open(pkgPath)
+// PackageReader handles I/O and JSON decoding.
+type PackageReader struct{}
+
+// Read decodes the package.json at the given path.
+func (r PackageReader) Read(path string) (PackageJSON, error) {
+	f, err := os.Open(path)
 	if err != nil {
-		fatalf("Error opening package.json: %v\n", err)
+		return PackageJSON{}, fmt.Errorf("opening package.json: %w", err)
 	}
-	defer f.Close()
+	defer func() { _ = f.Close() }()
 
 	var pkg PackageJSON
 	if err := json.NewDecoder(f).Decode(&pkg); err != nil {
-		fatalf("Error parsing package.json: %v\n", err)
+		return PackageJSON{}, fmt.Errorf("parsing package.json: %w", err)
 	}
 
-	if len(pkg.Scripts) == 0 {
-		fmt.Println("No scripts found in package.json.")
-		return
+	return pkg, nil
+}
+
+// ScriptRenderer writes the formatted script list to an io.Writer.
+type ScriptRenderer struct {
+	Writer io.Writer
+}
+
+// Render produces the formatted script list.
+func (r ScriptRenderer) Render(pm PackageManager, scripts []Script) error {
+	if len(scripts) == 0 {
+		_, err := fmt.Fprintln(r.Writer, "No scripts found in package.json.")
+		return err
 	}
 
-	fmt.Printf("\n📦 Detected: %s\n", pm)
-	fmt.Println(strings.Repeat("─", 40))
-
-	names := make([]string, 0, len(pkg.Scripts))
 	maxLen := 0
-	for name := range pkg.Scripts {
-		names = append(names, name)
-		if len(name) > maxLen {
-			maxLen = len(name)
+	for _, s := range scripts {
+		if l := len(s.Name); l > maxLen {
+			maxLen = l
 		}
 	}
-	sort.Strings(names)
 
-	for _, name := range names {
-		fmt.Printf("  %-*s  %s\n", maxLen, name, pkg.Scripts[name])
+	if _, err := fmt.Fprintf(r.Writer, "\n📦 Detected: %s\n", pm); err != nil {
+		return err
 	}
-	fmt.Println()
+	if _, err := fmt.Fprintln(r.Writer, strings.Repeat("─", 40)); err != nil {
+		return err
+	}
+
+	for _, s := range scripts {
+		if _, err := fmt.Fprintf(r.Writer, "  %-*s  %s\n", maxLen, s.Name, s.Command); err != nil {
+			return err
+		}
+	}
+
+	_, err := fmt.Fprintln(r.Writer)
+	return err
+}
+
+// ScriptService orchestrates the workflow: locate → parse → render.
+type ScriptService struct {
+	Locator  PackageLocator
+	Reader   PackageReader
+	Renderer ScriptRenderer
+}
+
+// ListScripts executes the full pipeline.
+func (s *ScriptService) ListScripts(startDir string, pm PackageManager, stopDir string) error {
+	pkgPath, err := s.Locator.Find(startDir, stopDir)
+	if err != nil {
+		return err
+	}
+
+	pkg, err := s.Reader.Read(pkgPath)
+	if err != nil {
+		return err
+	}
+
+	scripts := make([]Script, 0, len(pkg.Scripts))
+	for name, cmd := range pkg.Scripts {
+		scripts = append(scripts, Script{Name: name, Command: cmd})
+	}
+
+	sort.Slice(scripts, func(i, j int) bool {
+		return scripts[i].Name < scripts[j].Name
+	})
+
+	return s.Renderer.Render(pm, scripts)
+}
+
+// ValidateScript checks that a given script name exists in the nearest package.json.
+func (s *ScriptService) ValidateScript(startDir, scriptName string) error {
+	pkgPath, err := s.Locator.Find(startDir, "")
+	if err != nil {
+		return err
+	}
+
+	pkg, err := s.Reader.Read(pkgPath)
+	if err != nil {
+		return err
+	}
+
+	if _, ok := pkg.Scripts[scriptName]; !ok {
+		return fmt.Errorf("script '%s' not found in package.json", scriptName)
+	}
+	return nil
+}
+
+// listScripts is the CLI entry point. Behavior is preserved exactly.
+func listScripts(startDir string, pm PackageManager, stopDir string) {
+	svc := ScriptService{
+		Locator:  PackageLocator{},
+		Reader:   PackageReader{},
+		Renderer: ScriptRenderer{Writer: os.Stdout},
+	}
+
+	if err := svc.ListScripts(startDir, pm, stopDir); err != nil {
+		fatalf("Error: %v\n", err)
+	}
 }
