@@ -26,33 +26,38 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
+      - name: Configure Git Safe Directory
+        run: git config --global --add safe.directory "$GITHUB_WORKSPACE"
+
       - name: Build all binaries (cross platform)
         run: make build-all
 
       - name: Package npm tarballs
         run: make package-npm
 
+      # We inject the secret directly into the token variable inside .npmrc
       - name: Setup npm authentication
-        run: echo "//registry.npmjs.org/:_authToken=${NODE_AUTH_TOKEN}" > ~/.npmrc
+        run: |
+          echo "//registry.npmjs.org/:_authToken=\${NPM_TOKEN}" > ~/.npmrc
         env:
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+          NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
 
-      # Publish platform packages first
+      # Note the env variable name change to match what's inside .npmrc
       - name: Publish platform specific packages
         run: |
           cd npm
-          for pkg in cat-run-*/; do
+          for pkg in star-run-*/; do
             cd "$pkg"
             npm publish --access public
             cd ..
           done
         env:
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+          NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
 
       # Publish the main wrapper
       - name: Publish main wrapper
         run: |
-          cd npm/cat-run
+          cd npm/star-run
           npm publish --access public
         env:
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+          NPM_TOKEN: ${{ secrets.NPM_TOKEN }}

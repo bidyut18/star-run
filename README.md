@@ -1,12 +1,12 @@
-# 🚀 cat-run
+# 🚀 star-run
 
 > **Universal package manager script runner** – fast, zero‑config, and distributed globally via npm.
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](https://opensource.org/licenses/MIT)
 [![Go Version](https://img.shields.io/badge/Go-1.21+-00ADD8?logo=go)](https://go.dev/)
-[![npm version](https://img.shields.io/npm/v/cat-run)](https://www.npmjs.com/package/cat-run)
+[![npm version](https://img.shields.io/npm/v/star-run)](https://www.npmjs.com/package/star-run)
 
-Stop trying to remember whether the current repository uses `npm`, `yarn`, `pnpm`, or `bun`. Just type `cat-run dev` and let the runner instantly figure it out for you.
+Stop trying to remember whether the current repository uses `npm`, `yarn`, `pnpm`, or `bun`. Just type `star-run dev` and let the runner instantly figure it out for you.
 
 ---
 
@@ -23,27 +23,27 @@ Stop trying to remember whether the current repository uses `npm`, `yarn`, `pnpm
 ## 📦 Installation
 
 ```bash
-npm install -g cat-run
+npm install -g star-run
 ```
 
 ## Usage
 
 ### Run any script defined in package.json
 
-cat-run dev
-cat-run build --watch
+star-run dev
+star-run build --watch
 
 ### Install dependencies using the detected package manager
 
-cat-run --install
+star-run --install
 
 ### List available scripts beautifully formatted
 
-cat-run --list
+star-run --list
 
 ### Show the detected package manager without executing anything
 
-cat-run --detect
+star-run --detect
 
 
 ## 📄 License

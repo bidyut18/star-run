@@ -9,7 +9,7 @@ import (
 func TestDetectPackageManager(t *testing.T) {
 	tests := []struct {
 		name        string
-		files       map[string]string // relative path -> content
+		files       map[string]string 
 		expected    PackageManager
 		expectError bool
 	}{
@@ -82,7 +82,7 @@ func TestDetectPackageManager(t *testing.T) {
 				"package.json":      `{"packageManager": "unknown"}`,
 				"package-lock.json": `{}`,
 			},
-			expected: Npm, // lockfile wins after unknown
+			expected: Npm, 
 		},
 		{
 			name:        "no package manager",
@@ -116,7 +116,6 @@ func TestDetectPackageManager(t *testing.T) {
 				}
 			}
 
-			// Determine start directory: if we have subdir structure, start there
 			startDir := tmpDir
 			if _, ok := tt.files["subdir/package.json"]; ok {
 				startDir = filepath.Join(tmpDir, "subdir")

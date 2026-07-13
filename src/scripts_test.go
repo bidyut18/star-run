@@ -4,7 +4,7 @@ import (
 	"bytes"
 	"encoding/json"
 	"os"
-	"os/exec" // added
+	"os/exec" 
 	"path/filepath"
 	"testing"
 )
@@ -34,15 +34,12 @@ func TestListScripts(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	// Capture stdout
 	oldStdout := os.Stdout
 	r, w, _ := os.Pipe()
 	os.Stdout = w
 
-	// Call listScripts with a PackageManager (any)
 	listScripts(tmpDir, Npm, tmpDir)
 
-	// Restore stdout
 	w.Close()
 	os.Stdout = oldStdout
 
@@ -50,7 +47,6 @@ func TestListScripts(t *testing.T) {
 	_, _ = buf.ReadFrom(r)
 	output := buf.String()
 
-	// Check output contains script names and commands
 	for name, cmd := range scripts {
 		if !bytes.Contains([]byte(output), []byte(name)) {
 			t.Errorf("output missing script name: %s", name)
@@ -59,7 +55,6 @@ func TestListScripts(t *testing.T) {
 			t.Errorf("output missing script command: %s", cmd)
 		}
 	}
-	// Check header
 	if !bytes.Contains([]byte(output), []byte("Detected: npm")) {
 		t.Error("output missing detection header")
 	}

@@ -1,10 +1,10 @@
 {
-  "name": "cat-run",
-  "version": "0.0.2",
+  "name": "star-run",
+  "version": "0.0.3",
   "description": "Universal package manager script runner for JS/TS projects — fast, zero config, distributed via npm",
   "main": "index.js",
   "bin": {
-    "cat-run": "index.js"
+    "star-run": "index.js"
   },
   "files": [
     "index.js",
@@ -12,7 +12,7 @@
     "LICENSE"
   ],
   "scripts": {
-    "build": "go build -ldflags=\"-s -w\" -o bin/cat-run ./src",
+    "build": "go build -ldflags=\"-s -w\" -o bin/star-run ./src",
     "build:all": "make build-all",
     "package:npm": "make package-npm",
     "test": "go test -v ./...",
@@ -22,12 +22,12 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/bidyut18/cat-run.git"
+    "url": "git+https://github.com/bidyut18/star-run.git"
   },
   "bugs": {
-    "url": "https://github.com/bidyut18/cat-run/issues"
+    "url": "https://github.com/bidyut18/star-run/issues"
   },
-  "homepage": "https://github.com/bidyut18/cat-run#readme",
+  "homepage": "https://github.com/bidyut18/star-run#readme",
   "keywords": [
     "runner",
     "package-manager",

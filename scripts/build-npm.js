@@ -12,7 +12,7 @@ const path = require("path");
 // ─── CONFIG ─────────────────────────────────────────────
 const NPM_SCOPE     = "@bidyut26";
 const GITHUB_USER   = "bidyut18";
-const REPO          = `${GITHUB_USER}/cat-run`;
+const REPO          = `${GITHUB_USER}/star-run`;
 const REPO_URL      = `https://github.com/${REPO}`;
 const AUTHOR        = "Bidyut Mahanta <bidyutmahanta7768@outlook.com>";
 
@@ -20,11 +20,11 @@ const rootPkg = require("../package.json");
 const VERSION = rootPkg.version;
 
 const TARGETS = [
-  { platform: "darwin", arch: "x64",  binDir: "darwin-x64",   bin: "cat-run"      },
-  { platform: "darwin", arch: "arm64", binDir: "darwin-arm64",  bin: "cat-run"      },
-  { platform: "linux",  arch: "x64",  binDir: "linux-x64",    bin: "cat-run"      },
-  { platform: "linux",  arch: "arm64", binDir: "linux-arm64",   bin: "cat-run"      },
-  { platform: "win32",  arch: "x64",  binDir: "win32-x64",    bin: "cat-run.exe"  },
+  { platform: "darwin", arch: "x64",  binDir: "darwin-x64",   bin: "star-run"      },
+  { platform: "darwin", arch: "arm64", binDir: "darwin-arm64",  bin: "star-run"      },
+  { platform: "linux",  arch: "x64",  binDir: "linux-x64",    bin: "star-run"      },
+  { platform: "linux",  arch: "arm64", binDir: "linux-arm64",   bin: "star-run"      },
+  { platform: "win32",  arch: "x64",  binDir: "win32-x64",    bin: "star-run.exe"  },
 ];
 
 // ─── PATHS ──────────────────────────────────────────────
@@ -55,8 +55,8 @@ let missing = 0;
 
 // 1. Platform-specific binary packages
 for (const t of TARGETS) {
-  const pkgName = `${NPM_SCOPE}/cat-run-${t.platform}-${t.arch}`;
-  const dirName = `cat-run-${t.platform}-${t.arch}`;
+  const pkgName = `${NPM_SCOPE}/star-run-${t.platform}-${t.arch}`;
+  const dirName = `star-run-${t.platform}-${t.arch}`;
   const pkgDir  = path.join(NPM_DIR, dirName);
   fs.mkdirSync(pkgDir, { recursive: true });
 
@@ -74,7 +74,7 @@ for (const t of TARGETS) {
   writeJson(path.join(pkgDir, "package.json"), {
     name: pkgName,
     version: VERSION,
-    description: `cat-run binary for ${t.platform} ${t.arch}`,
+    description: `star-run binary for ${t.platform} ${t.arch}`,
     author: AUTHOR,
     license: "MIT",
     os: [t.platform],
@@ -87,7 +87,7 @@ for (const t of TARGETS) {
 
   fs.writeFileSync(
     path.join(pkgDir, "README.md"),
-    `# ${pkgName}\n\nPlatform-specific binary for [cat-run](${REPO_URL}) on ${t.platform} ${t.arch}.\n`
+    `# ${pkgName}\n\nPlatform-specific binary for [star-run](${REPO_URL}) on ${t.platform} ${t.arch}.\n`
   );
 
   optionalDeps[pkgName] = VERSION;
@@ -100,7 +100,7 @@ if (missing > 0) {
 }
 
 // 2. Main wrapper package
-const mainDir = path.join(NPM_DIR, "cat-run");
+const mainDir = path.join(NPM_DIR, "star-run");
 fs.mkdirSync(mainDir, { recursive: true });
 
 // Copy launcher script
@@ -119,11 +119,11 @@ for (const file of ["README.md", "LICENSE"]) {
 }
 
 writeJson(path.join(mainDir, "package.json"), {
-  name: "cat-run",
+  name: "star-run",
   version: VERSION,
   description: "Universal package manager script runner — fast Go binary distributed via npm",
   main: "index.js",
-  bin: { "cat-run": "index.js" },
+  bin: { "star-run": "index.js" },
   files: ["index.js", "README.md", "LICENSE"],
   optionalDependencies: optionalDeps,
   keywords: ["cli", "package-manager", "npm", "yarn", "pnpm", "bun", "runner", "go"],
@@ -136,5 +136,5 @@ writeJson(path.join(mainDir, "package.json"), {
   publishConfig: { access: "public" },
 });
 
-console.log(`✅  cat-run wrapper (v${VERSION})`);
-console.log("\n📦 Publish order: platform packages → cat-run wrapper");
+console.log(`✅  star-run wrapper (v${VERSION})`);
+console.log("\n📦 Publish order: platform packages → star-run wrapper");

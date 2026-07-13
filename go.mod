@@ -1,3 +1,3 @@
-module github.com/bidyut18/cat-run
+module github.com/bidyut18/star-run
 
 go 1.26

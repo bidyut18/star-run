@@ -7,10 +7,10 @@ vendor/
 go.work
 go.work.sum
 
-npm/cat-run-*/
+npm/star-run-*/
 npm/*/*.tgz
 npm/*/package-lock.json
-npm/cat-run/bin/**
+npm/star-run/bin/**
 node_modules/
 npm/**
 bin/**

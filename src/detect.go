@@ -46,7 +46,6 @@ func (pm PackageManager) runArgs(script string) []string {
 
 func detectPackageManager(dir, stopDir string) (PackageManager, error) {
 	for {
-		// 1. Check package.json for a "packageManager" hint
 		pkgPath := filepath.Join(dir, "package.json")
 		if data, err := os.ReadFile(pkgPath); err == nil {
 			var pkg struct {

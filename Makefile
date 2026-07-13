@@ -1,6 +1,6 @@
-# cat-run Makefile
+# star-run Makefile
 
-BINARY_NAME := cat-run
+BINARY_NAME := star-run
 SRC_DIR     := ./src
 BIN_DIR     := ./bin
 
@@ -11,11 +11,11 @@ GOFLAGS := -buildvcs=false
 # dir_name uses Node.js os.platform() / os.arch() naming
 # go_os / go_arch use Go's naming
 TARGETS := \
-	"darwin-x64|darwin|amd64|cat-run" \
-	"darwin-arm64|darwin|arm64|cat-run" \
-	"linux-x64|linux|amd64|cat-run" \
-	"linux-arm64|linux|arm64|cat-run" \
-	"win32-x64|windows|amd64|cat-run.exe"
+	"darwin-x64|darwin|amd64|star-run" \
+	"darwin-arm64|darwin|arm64|star-run" \
+	"linux-x64|linux|amd64|star-run" \
+	"linux-arm64|linux|arm64|star-run" \
+	"win32-x64|windows|amd64|star-run.exe"
 
 .PHONY: all build build-all test clean package-npm publish-dry
 
@@ -51,7 +51,7 @@ package-npm: build-all
 
 publish-dry: package-npm
 	cd npm && \
-	for pkg in cat-run-*/; do \
+	for pkg in star-run-*/; do \
 		cd "$$pkg" && npm publish --dry-run && cd ..; \
 	done && \
-	cd cat-run && npm publish --dry-run
+	cd star-run && npm publish --dry-run
