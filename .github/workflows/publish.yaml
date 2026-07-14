@@ -38,12 +38,13 @@ jobs:
         if: ${{ steps.branch-filter.outputs.is_release == 'true' }}
         uses: actions/setup-node@v7
         with:
-          node-version: "25"
+          node-version: "24"
+          
           
 
       - name: Upgrade npm to support staged publishing
         if: ${{ steps.branch-filter.outputs.is_release == 'true' }}
-        run: npm install -g npm@latest
+        run: npm install -g npm@11.5
 
       - name: Install Task
         if: ${{ steps.branch-filter.outputs.is_release == 'true' }}
