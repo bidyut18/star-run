@@ -40,6 +40,10 @@ jobs:
         with:
           node-version: "25"
           cache: "npm"
+          
+      - name: Upgrade npm to support staged publishing
+        if: steps.branch-filter.outputs.is_release == 'true'
+        run: npm install -g npm@latest
 
       - name: Install Task
         if: steps.branch-filter.outputs.is_release == 'true'
