@@ -6,6 +6,8 @@
 [![Go Version](https://img.shields.io/badge/Go-1.21+-00ADD8?logo=go)](https://go.dev/)
 [![npm version](https://img.shields.io/npm/v/star-run)](https://www.npmjs.com/package/star-run)
 ![status](https://img.shields.io/badge/status-alpha-orange)
+![CI Status](https://github.com/bidyut18/star-run/actions/workflows/ci.yaml/badge.svg)
+
 
 Stop trying to remember whether the current repository uses `npm`, `yarn`, `pnpm`, or `bun`. Just type `star-run dev` and let the runner instantly figure it out for you.
 

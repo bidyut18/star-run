@@ -3,7 +3,7 @@ name: Publish to npm
 on:
   push:
     tags:
-        - "v*"
+      - "v*"
   workflow_dispatch:
 
 jobs:
@@ -12,9 +12,9 @@ jobs:
 
     steps:
       - name: Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
         with:
-          fetch-depth: 0 
+          fetch-depth: 0
 
       - name: Verify Tag Exists on Release Branch
         id: branch-filter
@@ -29,14 +29,14 @@ jobs:
 
       - name: Set up Go
         if: steps.branch-filter.outputs.is_release == 'true'
-        uses: actions/setup-go@v5
+        uses: actions/setup-go@v6
         with:
           go-version: "1.26.3"
-          cache: true
+          cache: false
 
       - name: Set up Node.js
         if: steps.branch-filter.outputs.is_release == 'true'
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v7
         with:
           node-version: "25"
           cache: "npm"
@@ -61,9 +61,17 @@ jobs:
       - name: Publish packages to NPM
         if: steps.branch-filter.outputs.is_release == 'true'
         run: |
+          if [[ "${{ github.ref_name }}" == *"alpha"* ]]; then
+            NPM_TAG="alpha"
+          else
+            NPM_TAG="latest"
+          fi
+
+          echo "Publishing with npm tag: $NPM_TAG"
+
           for dir in npm/star-run-*/ npm/star-run/; do
             if [ -d "$dir" ]; then
-              cd "$dir" && npm publish --access public && cd -
+              (cd "$dir" && npm stage publish --access public --tag $NPM_TAG )
             fi
           done
         env:
