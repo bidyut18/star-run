@@ -38,13 +38,7 @@ jobs:
         if: ${{ steps.branch-filter.outputs.is_release == 'true' }}
         uses: actions/setup-node@v7
         with:
-          node-version: "24"
-          
-          
-
-      - name: Upgrade npm to support staged publishing
-        if: ${{ steps.branch-filter.outputs.is_release == 'true' }}
-        run: npm install -g npm@11.5
+          node-version: "25"
 
       - name: Install Task
         if: ${{ steps.branch-filter.outputs.is_release == 'true' }}
@@ -76,7 +70,7 @@ jobs:
 
           for dir in npm/star-run-*/ npm/star-run/; do
             if [ -d "$dir" ]; then
-              (cd "$dir" && npm stage publish --access public --tag $NPM_TAG )
+              (cd "$dir" && npm publish --access public --tag $NPM_TAG )
             fi
           done
         env:
