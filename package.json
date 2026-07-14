@@ -41,7 +41,7 @@
   "license": "MIT",
   "author": "Bidyut Mahanta <bidyutmahanta7768@outlook.com>",
   "engines": {
-    "node": ">=25.0.0",
+    "node": ">=22.22.2",
     "npm": ">=11.5.0"
   }
 }
