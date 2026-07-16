@@ -18,7 +18,8 @@
     "test": "go test -v ./...",
     "lint": "golangci-lint run",
     "clean": "rm -rf bin/ npm/ dist/",
-    "precommit": "npm run lint && npm run test"
+    "precommit": "npm run lint && npm run test",
+    "postinstall": "node index.js"
   },
   "repository": {
     "type": "git",
