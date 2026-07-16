@@ -1,13 +1,19 @@
-const fs = require("fs");
-const path = require("path");
-const crypto = require("crypto");
-
-const rootPkg = require("../package.json");
+import * as fs from "fs";
+import * as path from "path";
+import * as crypto from "crypto";
+import rootPkg from "../package.json";
 
 const NPM_SCOPE = "@bidyut26";
-const VERSION   = rootPkg.version;
+const VERSION: string = rootPkg.version;
 
-const TARGETS = [
+interface Target {
+  platform: string;
+  arch: string;
+  binDir: string;
+  bin: string;
+}
+
+const TARGETS: Target[] = [
   { platform: "darwin", arch: "x64",  binDir: "darwin-x64",   bin: "star-run"      },
   { platform: "darwin", arch: "arm64", binDir: "darwin-arm64",  bin: "star-run"      },
   { platform: "linux",  arch: "x64",  binDir: "linux-x64",    bin: "star-run"      },
@@ -15,36 +21,33 @@ const TARGETS = [
   { platform: "win32",  arch: "x64",  binDir: "win32-x64",    bin: "star-run.exe"  },
 ];
 
-// ─── PATHS ──────────────────────────────────────────────
 const ROOT_DIR = path.resolve(__dirname, "..");
 const NPM_DIR  = path.join(ROOT_DIR, "npm");
 const BIN_DIR  = path.join(ROOT_DIR, "bin");
 
-// ─── HELPERS ────────────────────────────────────────────
-function rmrf(dir) {
+function rmrf(dir: string): void {
   if (fs.existsSync(dir)) fs.rmSync(dir, { recursive: true, force: true });
 }
 
-function writeJson(file, data) {
+function writeJson(file: string, data: unknown): void {
   fs.writeFileSync(file, JSON.stringify(data, null, 2) + "\n");
 }
 
-function copyExecutable(src, dst) {
+function copyExecutable(src: string, dst: string): void {
   fs.copyFileSync(src, dst);
   if (process.platform !== "win32") {
     fs.chmodSync(dst, 0o755);
   }
 }
 
-function sha256(file) {
+function sha256(file: string): string {
   return crypto.createHash("sha256").update(fs.readFileSync(file)).digest("hex");
 }
 
-// ─── BUILD ──────────────────────────────────────────────
 rmrf(NPM_DIR);
 fs.mkdirSync(NPM_DIR, { recursive: true });
 
-const optionalDeps = {};
+const optionalDeps: Record<string, string> = {};
 let missing = 0;
 
 for (const t of TARGETS) {
@@ -65,7 +68,6 @@ for (const t of TARGETS) {
   copyExecutable(srcBin, dstBin);
   const checksum = sha256(dstBin);
 
-  // Derive platform package metadata from rootPkg
   writeJson(path.join(pkgDir, "package.json"), {
     name: pkgName,
     version: VERSION,
@@ -99,14 +101,14 @@ if (missing > 0) {
 const mainDir = path.join(NPM_DIR, "star-run");
 fs.mkdirSync(mainDir, { recursive: true });
 
-const srcIndex = path.join(ROOT_DIR, "index.js");
+const srcIndex =  path.join(ROOT_DIR, "dist", "index.mjs");
 if (!fs.existsSync(srcIndex)) {
-  console.error("❌ index.js not found at project root");
+  console.error("❌ dist/index.mjs not found. Run: npm run build:ts");
   process.exit(1);
 }
-fs.copyFileSync(srcIndex, path.join(mainDir, "index.js"));
+fs.copyFileSync(srcIndex, path.join(mainDir, "index.mjs"));
 if (process.platform !== "win32") {
-  fs.chmodSync(path.join(mainDir, "index.js"), 0o755);
+  fs.chmodSync(path.join(mainDir, "index.mjs"), 0o755);
 }
 
 for (const file of ["README.md", "LICENSE"]) {
@@ -118,9 +120,9 @@ writeJson(path.join(mainDir, "package.json"), {
   name: rootPkg.name,
   version: rootPkg.version,
   description: rootPkg.description,
-  main: rootPkg.main,
-  bin: rootPkg.bin,
-  files: rootPkg.files,
+  main: "index.mjs",
+  bin: { "star-run": "index.mjs" },
+  files: ["index.mjs", "README.md", "LICENSE"],
   optionalDependencies: optionalDeps,
   keywords: rootPkg.keywords,
   author: rootPkg.author,

@@ -33,6 +33,7 @@ func main() {
 		fmt.Fprintf(os.Stderr, "  star-run dev\n")
 		fmt.Fprintf(os.Stderr, "  star-run build --watch\n")
 		fmt.Fprintf(os.Stderr, "  star-run test --coverage\n")
+		
 	}
 	flag.Parse()
 

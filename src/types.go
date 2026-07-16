@@ -11,11 +11,12 @@ const (
 	Yarn PackageManager = "yarn"
 	Pnpm PackageManager = "pnpm"
 	Bun  PackageManager = "bun"
+	Deno PackageManager = "deno"  
 )
 
 func (pm PackageManager) String() string {
 	switch pm {
-	case Npm, Yarn, Pnpm, Bun:
+	case Npm, Yarn, Pnpm, Bun,Deno:
 		return string(pm)
 	default:
 		return "unknown"
@@ -29,6 +30,9 @@ func (pm PackageManager) installArgs() []string {
 func (pm PackageManager) runArgs(script string) []string {
 	if pm == Yarn {
 		return []string{script}
+	}
+	if pm == Deno {
+		return []string{"task", script}  
 	}
 	return []string{"run", script}
 }

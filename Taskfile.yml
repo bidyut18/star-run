@@ -7,7 +7,6 @@ vars:
   VERSION:
     sh: node -p "require('./package.json').version" 2>/dev/null || echo "dev"
   LDFLAGS: -s -w -X main.version={{.VERSION}}
-  # Windows needs .exe; Unix does not.
   EXT: '{{if eq .OS "windows"}}.exe{{end}}'
 
 env:
@@ -18,6 +17,11 @@ tasks:
     desc: Run the default local build
     cmds:
       - task: build
+
+  install:
+    desc: Install Node.js dependencies
+    cmds:
+      - npm install
 
   build:
     desc: Build the binary for the current host platform
@@ -31,13 +35,23 @@ tasks:
       - mkdir -p {{.BIN_DIR}}
       - go build -ldflags="{{.LDFLAGS}}" -o {{.BIN_DIR}}/{{.BINARY_NAME}}{{.EXT}} {{.SRC_DIR}}
 
+  build:ts:
+    desc: Bundle TypeScript entrypoint with tsdown
+    sources:
+      - "index.ts"
+      - "tsdown.config.ts"
+    generates:
+      - "dist/index.mjs"
+    cmds:
+      - npx tsdown
+
   build-all:
     desc: Build binaries for all supported target platforms
     deps: [clean-bin]
     cmds:
       - task: build-target
         vars:
-          TARGET: "{{.ITEM}}" # Converts the 'any' type item into a explicit string primitive
+          TARGET: "{{.ITEM}}"
         for:
           - darwin-x64|darwin|amd64|star-run
           - darwin-arm64|darwin|arm64|star-run
@@ -48,7 +62,6 @@ tasks:
   build-target:
     internal: true
     vars:
-      # Runs the split inline so it correctly extracts the text slice
       DIR: '{{index (splitList "|" .TARGET) 0}}'
       GOOS: '{{index (splitList "|" .TARGET) 1}}'
       GOARCH: '{{index (splitList "|" .TARGET) 2}}'
@@ -61,10 +74,22 @@ tasks:
       - mkdir -p {{.BIN_DIR}}/{{.DIR}}
       - go build -ldflags="{{.LDFLAGS}}" -o {{.BIN_DIR}}/{{.DIR}}/{{.BIN}} {{.SRC_DIR}}
       - echo "✅ {{.DIR}}"
+
   test:
-    desc: Run project tests
+    desc: Run all project tests
     cmds:
       - go test -v ./...
+
+  lint:
+    desc: Run Go linter
+    cmds:
+      - golangci-lint run ./src/...
+
+  precommit:
+    desc: Run lint and tests before committing
+    cmds:
+      - task: lint
+      - task: test
 
   clean:
     desc: Clean all build artifacts and generated npm packages
@@ -79,11 +104,37 @@ tasks:
 
   package-npm:
     desc: Generate NPM distribution packages
-    deps: [build-all]
+    deps: [build-all, build:ts]
     cmds:
-      - node scripts/build-npm.js
+      - npx tsx scripts/build-npm.ts
 
-  publish-dry:
+  publish:
+    desc: Publish all packages to npm (requires NPM_TOKEN env var)
+    deps: [package-npm]
+    cmds:
+      - |
+        if [ -z "$NPM_TOKEN" ]; then
+          echo "❌ NPM_TOKEN environment variable is not set"
+          exit 1
+        fi
+        echo "//registry.npmjs.org/:_authToken=${NPM_TOKEN}" > ~/.npmrc
+      - |
+        VERSION_TAG="{{.VERSION}}"
+        if echo "$VERSION_TAG" | grep -q "alpha"; then
+          NPM_TAG="alpha"
+        else
+          NPM_TAG="latest"
+        fi
+        echo "Publishing with npm tag: $NPM_TAG"
+      - |
+        for dir in npm/star-run-*/ npm/star-run/; do
+          if [ -d "$dir" ]; then
+            echo "Publishing $dir..."
+            (cd "$dir" && npm publish --access public --tag $NPM_TAG)
+          fi
+        done
+
+  publish:dry:
     desc: Dry-run publish all generated NPM packages
     deps: [package-npm]
     cmds:
@@ -91,9 +142,18 @@ tasks:
         for dir in npm/star-run-*/ npm/star-run/; do
           if [ -d "$dir" ]; then
             echo "Dry-running publish for $dir..."
-            (cd "$dir" && npm publish --dry-run --tag next)
+            (cd "$dir" && npm publish --dry-run --access public --tag next)
           fi
         done
+
+  ci:
+    desc: Run full CI pipeline locally
+    cmds:
+      - task: clean
+      - task: lint
+      - task: test
+      - task: package-npm
+      - task: publish:dry
 
   version:
     desc: Print the current version from package.json

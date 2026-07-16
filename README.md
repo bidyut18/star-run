@@ -7,6 +7,7 @@
 [![npm version](https://img.shields.io/npm/v/star-run)](https://www.npmjs.com/package/star-run)
 ![status](https://img.shields.io/badge/status-alpha-orange)
 [![CI](https://github.com/bidyut18/star-run/actions/workflows/ci.yaml/badge.svg?branch=release)](https://github.com/bidyut18/star-run/actions/workflows/ci.yaml)
+[![Socket Badge](https://badge.socket.dev/npm/package/star-run/0.0.1)](https://badge.socket.dev/npm/package/star-run/0.0.1)
 
 Stop trying to remember whether the current repository uses `npm`, `yarn`, `pnpm`, or `bun`. Just type `star-run dev` and let the runner instantly figure it out for you.
 
@@ -141,7 +142,7 @@ Shows the current version of `star-run`.
 
 ```bash
 star-run --version
-# star-run 0.0.4.alpha.1
+# star-run 0.0.1
 ```
 
 ---
@@ -157,7 +158,7 @@ star-run --help
 **Output:**
 
 ```
-star-run 0.0.4.alpha.1 — Universal package manager script runner
+star-run 0.0.1 — Universal package manager script runner
 
 Usage:
   star-run <script> [args...]    Run a package.json script

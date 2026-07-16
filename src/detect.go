@@ -22,11 +22,11 @@ var (
 		{"pnpm-lock.yaml", Pnpm},
 		{"bun.lock", Bun},
 		{"bun.lockb", Bun},
+		{"deno.lock", Deno},  
 	}
 )
 
-// detectPackageManager walks up the directory tree looking for a package manager.
-// It returns the detected PM, an optional warning string, and an error.
+
 func detectPackageManager(dir, stopDir string) (PackageManager, string, error) {
 	absDir, err := filepath.Abs(dir)
 	if err != nil {
@@ -42,7 +42,7 @@ func detectPackageManager(dir, stopDir string) (PackageManager, string, error) {
 	}
 
 	for {
-		// 1. Authoritative packageManager field
+		
 		if pm, ok := detectFromPackageJSON(absDir); ok {
 			if warning := mismatchWarning(absDir, pm); warning != "" {
 				return pm, warning, nil
@@ -89,7 +89,7 @@ func detectFromPackageJSON(dir string) (PackageManager, bool) {
 	name, _, _ := strings.Cut(pkg.PackageManager, "@")
 	pm := PackageManager(name)
 	switch pm {
-	case Npm, Yarn, Pnpm, Bun:
+	case Npm, Yarn, Pnpm, Bun,Deno:
 		return pm, true
 	}
 	return "", false
@@ -109,7 +109,6 @@ func detectFromLockFiles(dir string) (PackageManager, []string, bool) {
 	return pm, found, len(found) > 0
 }
 
-// mismatchWarning returns a message if a lockfile exists for a DIFFERENT PM.
 func mismatchWarning(dir string, fieldPM PackageManager) string {
 	var found []string
 	for _, lf := range lockFiles {

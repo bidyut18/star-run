@@ -1,29 +1,34 @@
 #!/usr/bin/env node
-const { spawn } = require("child_process");
-const path = require("path");
-const fs = require("fs");
-const os = require("os");
+import { spawn } from "child_process";
+import * as path from "path";
+import * as fs from "fs";
+import * as os from "os";
 
 const PLATFORM = os.platform();
 const ARCH = os.arch();
 const BINARY_NAME = PLATFORM === "win32" ? "star-run.exe" : "star-run";
 const NPM_SCOPE = "@bidyut26";
 
-function getBinaryPath() {
+function getBinaryPath(): string | null {
   const platformPkg = `${NPM_SCOPE}/star-run-${PLATFORM}-${ARCH}`;
   try {
     const pkgPath = require.resolve(`${platformPkg}/package.json`);
     const binaryPath = path.join(path.dirname(pkgPath), BINARY_NAME);
     if (fs.existsSync(binaryPath)) return binaryPath;
   } catch {
-    // Platform-specific optional dependency not installed
+   
   }
 
-  const localBin = path.join(__dirname, "bin", BINARY_NAME);
-  if (fs.existsSync(localBin)) return localBin;
+ 
+  const candidates = [
+    path.join(__dirname, "bin", BINARY_NAME),        // running via tsx / repo root
+    path.join(__dirname, "..", "bin", BINARY_NAME),  // bundled in dist/
+    path.join(process.cwd(), "bin", BINARY_NAME),    // safety net
+  ];
 
-  const devBin = path.join(__dirname, BINARY_NAME);
-  if (fs.existsSync(devBin)) return devBin;
+  for (const p of candidates) {
+    if (fs.existsSync(p)) return p;
+  }
 
   return null;
 }
@@ -51,8 +56,8 @@ const child = spawn(binaryPath, process.argv.slice(2), {
   windowsHide: true,
 });
 
-child.on("exit", (code) => process.exit(code ?? 0));
-child.on("error", (err) => {
+child.on("exit", (code: number | null) => process.exit(code ?? 0));
+child.on("error", (err: Error) => {
   console.error(`❌  Failed to spawn star-run: ${err.message}`);
   process.exit(1);
 });

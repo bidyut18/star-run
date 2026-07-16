@@ -38,44 +38,25 @@ jobs:
         if: ${{ steps.branch-filter.outputs.is_release == 'true' }}
         uses: actions/setup-node@v7
         with:
-          node-version: "25"
+          node-version: "22"
+          cache: "npm"
 
       - name: Install Task
         if: ${{ steps.branch-filter.outputs.is_release == 'true' }}
         uses: arduino/setup-task@v3
         with:
           version: 3.x
-          
+
+      - name: Install Node dependencies
+        if: ${{ steps.branch-filter.outputs.is_release == 'true' }}
+        run: npm ci
+
       - name: Clean build artifacts
         if: ${{ steps.branch-filter.outputs.is_release == 'true' }}
         run: task clean
 
-      - name: Package npm tarballs
+      - name: Publish to npm
         if: ${{ steps.branch-filter.outputs.is_release == 'true' }}
-        run: task package-npm
-
-      - name: Setup npm authentication
-        if: ${{ steps.branch-filter.outputs.is_release == 'true' }}
-        run: |
-          echo "//registry.npmjs.org/:_authToken=\${NPM_TOKEN}" > ~/.npmrc
-        env:
-          NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
-
-      - name: Publish packages to NPM
-        if: ${{ steps.branch-filter.outputs.is_release == 'true' }}
-        run: |
-          if [[ "${{ github.ref_name }}" == *"alpha"* ]]; then
-            NPM_TAG="alpha"
-          else
-            NPM_TAG="latest"
-          fi
-
-          echo "Publishing with npm tag: $NPM_TAG"
-
-          for dir in npm/star-run-*/ npm/star-run/; do
-            if [ -d "$dir" ]; then
-              (cd "$dir" && npm publish --access public --tag $NPM_TAG )
-            fi
-          done
+        run: task publish
         env:
           NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
