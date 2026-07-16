@@ -6,8 +6,7 @@
 [![Go Version](https://img.shields.io/badge/Go-1.21+-00ADD8?logo=go)](https://go.dev/)
 [![npm version](https://img.shields.io/npm/v/star-run)](https://www.npmjs.com/package/star-run)
 ![status](https://img.shields.io/badge/status-alpha-orange)
-![CI Status](https://github.com/bidyut18/star-run/actions/workflows/ci.yaml/badge.svg)
-
+[![CI](https://github.com/bidyut18/star-run/actions/workflows/ci.yaml/badge.svg?branch=release)](https://github.com/bidyut18/star-run/actions/workflows/ci.yaml)
 
 Stop trying to remember whether the current repository uses `npm`, `yarn`, `pnpm`, or `bun`. Just type `star-run dev` and let the runner instantly figure it out for you.
 
@@ -76,12 +75,12 @@ star-run build --mode=production
 
 **What happens under the hood:**
 
-| Detected PM | Command executed |
-|-------------|------------------|
-| npm         | `npm run <script> [args...]` |
-| yarn        | `yarn <script> [args...]` |
+| Detected PM | Command executed              |
+| ----------- | ----------------------------- |
+| npm         | `npm run <script> [args...]`  |
+| yarn        | `yarn <script> [args...]`     |
 | pnpm        | `pnpm run <script> [args...]` |
-| bun         | `bun run <script> [args...]` |
+| bun         | `bun run <script> [args...]`  |
 
 ---
 
@@ -194,13 +193,13 @@ If the `packageManager` field conflicts with an existing lockfile (e.g., field s
 
 ## ⚙️ Supported Platforms
 
-| Platform | Architecture | Package |
-|----------|-------------|---------|
-| macOS    | x64         | `@bidyut26/star-run-darwin-x64` |
-| macOS    | arm64       | `@bidyut26/star-run-darwin-arm64` |
-| Linux    | x64         | `@bidyut26/star-run-linux-x64` |
-| Linux    | arm64       | `@bidyut26/star-run-linux-arm64` |
-| Windows  | x64         | `@bidyut26/star-run-win32-x64` |
+| Platform | Architecture | Package                           |
+| -------- | ------------ | --------------------------------- |
+| macOS    | x64          | `@bidyut26/star-run-darwin-x64`   |
+| macOS    | arm64        | `@bidyut26/star-run-darwin-arm64` |
+| Linux    | x64          | `@bidyut26/star-run-linux-x64`    |
+| Linux    | arm64        | `@bidyut26/star-run-linux-arm64`  |
+| Windows  | x64          | `@bidyut26/star-run-win32-x64`    |
 
 ---
 
