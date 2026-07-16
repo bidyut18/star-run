@@ -1,6 +1,7 @@
 package main
 
 import (
+	"bufio"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -9,6 +10,8 @@ import (
 	"sort"
 	"strings"
 )
+
+const separator = "────────────────────────────────────────"
 
 type PackageLocator struct{}
 
@@ -53,18 +56,59 @@ func (l PackageLocator) Find(startDir, stopDir string) (string, error) {
 type PackageReader struct{}
 
 func (r PackageReader) Read(path string) (PackageJSON, error) {
-	f, err := os.Open(path)
+	data, err := os.ReadFile(path)
 	if err != nil {
 		return PackageJSON{}, fmt.Errorf("opening package.json: %w", err)
 	}
-	defer func() { _ = f.Close() }()
 
 	var pkg PackageJSON
-	if err := json.NewDecoder(f).Decode(&pkg); err != nil {
+	if err := json.Unmarshal(data, &pkg); err != nil {
 		return PackageJSON{}, fmt.Errorf("parsing package.json: %w", err)
 	}
 
 	return pkg, nil
+}
+
+// ReadScripts unmarshals only the "scripts" field, avoiding the cost of
+// parsing the rest of package.json. Returns the scripts pre-sorted.
+func (r PackageReader) ReadScripts(path string) ([]Script, error) {
+	data, err := os.ReadFile(path)
+	if err != nil {
+		return nil, fmt.Errorf("opening package.json: %w", err)
+	}
+
+	var pkg struct {
+		Scripts map[string]string `json:"scripts"`
+	}
+	if err := json.Unmarshal(data, &pkg); err != nil {
+		return nil, fmt.Errorf("parsing package.json: %w", err)
+	}
+
+	scripts := make([]Script, 0, len(pkg.Scripts))
+	for name, cmd := range pkg.Scripts {
+		scripts = append(scripts, Script{Name: name, Command: cmd})
+	}
+
+	sort.Sort(byName(scripts))
+	return scripts, nil
+}
+
+// HasScript checks script existence by unmarshaling only the "scripts" field.
+func (r PackageReader) HasScript(path, name string) (bool, error) {
+	data, err := os.ReadFile(path)
+	if err != nil {
+		return false, fmt.Errorf("opening package.json: %w", err)
+	}
+
+	var pkg struct {
+		Scripts map[string]string `json:"scripts"`
+	}
+	if err := json.Unmarshal(data, &pkg); err != nil {
+		return false, fmt.Errorf("parsing package.json: %w", err)
+	}
+
+	_, ok := pkg.Scripts[name]
+	return ok, nil
 }
 
 type ScriptRenderer struct {
@@ -84,22 +128,34 @@ func (r ScriptRenderer) Render(pm PackageManager, scripts []Script) error {
 		}
 	}
 
-	if _, err := fmt.Fprintf(r.Writer, "\n📦 Detected: %s\n", pm); err != nil {
+	bw := bufio.NewWriter(r.Writer)
+
+	if _, err := fmt.Fprintf(bw, "\n📦 Detected: %s\n", pm); err != nil {
 		return err
 	}
-	if _, err := fmt.Fprintln(r.Writer, strings.Repeat("─", 40)); err != nil {
+	if _, err := fmt.Fprintln(bw, separator); err != nil {
 		return err
 	}
 
+	// Pre-build a padding string and slice it instead of calling fmt per line.
+	spaces := strings.Repeat(" ", maxLen)
 	for _, s := range scripts {
-		if _, err := fmt.Fprintf(r.Writer, "  %-*s  %s\n", maxLen, s.Name, s.Command); err != nil {
+		if _, err := bw.WriteString("  " + s.Name + spaces[len(s.Name):] + "  " + s.Command + "\n"); err != nil {
 			return err
 		}
 	}
 
-	_, err := fmt.Fprintln(r.Writer)
-	return err
+	if _, err := bw.WriteString("\n"); err != nil {
+		return err
+	}
+	return bw.Flush()
 }
+
+type byName []Script
+
+func (s byName) Len() int           { return len(s) }
+func (s byName) Less(i, j int) bool { return s[i].Name < s[j].Name }
+func (s byName) Swap(i, j int)      { s[i], s[j] = s[j], s[i] }
 
 type ScriptService struct {
 	Locator  PackageLocator
@@ -113,19 +169,10 @@ func (s *ScriptService) ListScripts(startDir string, pm PackageManager, stopDir 
 		return err
 	}
 
-	pkg, err := s.Reader.Read(pkgPath)
+	scripts, err := s.Reader.ReadScripts(pkgPath)
 	if err != nil {
 		return err
 	}
-
-	scripts := make([]Script, 0, len(pkg.Scripts))
-	for name, cmd := range pkg.Scripts {
-		scripts = append(scripts, Script{Name: name, Command: cmd})
-	}
-
-	sort.Slice(scripts, func(i, j int) bool {
-		return scripts[i].Name < scripts[j].Name
-	})
 
 	return s.Renderer.Render(pm, scripts)
 }
@@ -136,12 +183,12 @@ func (s *ScriptService) ValidateScript(startDir, stopDir, scriptName string) err
 		return err
 	}
 
-	pkg, err := s.Reader.Read(pkgPath)
+	has, err := s.Reader.HasScript(pkgPath, scriptName)
 	if err != nil {
 		return err
 	}
 
-	if _, ok := pkg.Scripts[scriptName]; !ok {
+	if !has {
 		return fmt.Errorf("script '%s' not found in package.json", scriptName)
 	}
 	return nil

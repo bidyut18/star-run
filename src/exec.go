@@ -8,8 +8,6 @@ import (
 	"os/exec"
 )
 
-// runCommand executes the named command with args inside the given context.
-// It returns the process exit code so the caller can clean up before exiting.
 func runCommand(ctx context.Context, name string, args []string) int {
 	cmd := exec.CommandContext(ctx, name, args...)
 	cmd.Stdin = os.Stdin
