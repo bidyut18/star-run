@@ -12,7 +12,7 @@ import (
 var (
 	errNoPackageManager = errors.New("no package manager detected")
 
-	// Ordered slice preserves deterministic priority.
+	
 	lockFiles = []struct {
 		name string
 		pm   PackageManager
