@@ -109,15 +109,9 @@ tasks:
       - npx tsx scripts/build-npm.ts
 
   publish:
-    desc: Publish all packages to npm (requires NPM_TOKEN env var)
+    desc: Publish all packages to npm via OIDC (Trusted Publishers)
     deps: [package-npm]
     cmds:
-      - |
-        if [ -z "$NPM_TOKEN" ]; then
-          echo "❌ NPM_TOKEN environment variable is not set"
-          exit 1
-        fi
-        echo "//registry.npmjs.org/:_authToken=${NPM_TOKEN}" > ~/.npmrc
       - |
         VERSION_TAG="{{.VERSION}}"
         if echo "$VERSION_TAG" | grep -q "alpha"; then
@@ -130,7 +124,7 @@ tasks:
         for dir in npm/star-run-*/ npm/star-run/; do
           if [ -d "$dir" ]; then
             echo "Publishing $dir..."
-            (cd "$dir" && npm publish --access public --tag $NPM_TAG)
+            (cd "$dir" && npm publish --access public --tag $NPM_TAG --provenance)
           fi
         done
 
