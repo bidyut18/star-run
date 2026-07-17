@@ -2,6 +2,7 @@ package main
 
 import (
 	"bytes"
+	"encoding/json"
 	"os"
 	"path/filepath"
 	"testing"
@@ -283,7 +284,7 @@ func TestStripJSONC(t *testing.T) {
 
 "a":1
 }`, false},
-		{"trailing comma", `{"a":1,}`, `{"a":1}`, false},
+		{"trailing comma", `{"a":1,}`, `{"a":1,}`, false},
 		{"unterminated string", `{"a":"`, ``, true},
 	}
 
@@ -340,4 +341,26 @@ func TestDetectFreshProject(t *testing.T) {
 			t.Errorf("expected no warning, got %q", warning)
 		}
 	})
+}
+
+func TestReadConfigFileTrailingComma(t *testing.T) {
+	tmpDir := t.TempDir()
+	path := filepath.Join(tmpDir, "deno.jsonc")
+	content := `{"tasks": {"start": "deno run index.ts",}}`
+	if err := os.WriteFile(path, []byte(content), 0644); err != nil {
+		t.Fatal(err)
+	}
+	data, err := readConfigFile(path)
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	var cfg struct {
+		Tasks map[string]string `json:"tasks"`
+	}
+	if err := json.Unmarshal(data, &cfg); err != nil {
+		t.Fatalf("failed to parse cleaned JSON: %v", err)
+	}
+	if _, ok := cfg.Tasks["start"]; !ok {
+		t.Error("expected task 'start' to exist")
+	}
 }
