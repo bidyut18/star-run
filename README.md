@@ -7,9 +7,9 @@
 [![npm version](https://img.shields.io/npm/v/star-run)](https://www.npmjs.com/package/star-run)
 ![status](https://img.shields.io/badge/status-alpha-orange)
 [![CI](https://github.com/bidyut18/star-run/actions/workflows/ci.yaml/badge.svg?branch=release)](https://github.com/bidyut18/star-run/actions/workflows/ci.yaml)
-[![Socket Badge](https://badge.socket.dev/npm/package/star-run/0.0.1)](https://badge.socket.dev/npm/package/star-run/0.0.1)
+[![Socket Badge](https://badge.socket.dev/npm/package/star-run/0.0.2)](https://badge.socket.dev/npm/package/star-run/0.0.2)
 
-Stop trying to remember whether the current repository uses `npm`, `yarn`, `pnpm`, or `bun`. Just type `star-run dev` and let the runner instantly figure it out for you.
+Stop trying to remember whether the current repository uses `npm`, `yarn`, `pnpm`,`Deno`, or `bun`. Just type `star-run dev` and let the runner instantly figure it out for you.
 
 ---
 
@@ -38,7 +38,7 @@ npm install -g star-run
 ## 🚀 Quick Start
 
 ```bash
-# Run a script (auto-detects npm / yarn / pnpm / bun)
+# Run a script (auto-detects npm / yarn / pnpm / bun/Deno)
 star-run dev
 
 # Pass arguments through to the underlying script
@@ -76,12 +76,13 @@ star-run build --mode=production
 
 **What happens under the hood:**
 
-| Detected PM | Command executed              |
-| ----------- | ----------------------------- |
-| npm         | `npm run <script> [args...]`  |
-| yarn        | `yarn <script> [args...]`     |
-| pnpm        | `pnpm run <script> [args...]` |
-| bun         | `bun run <script> [args...]`  |
+| Detected PM | Command executed               |
+| ----------- | ------------------------------ |
+| npm         | `npm run <script> [args...]`   |
+| yarn        | `yarn <script> [args...]`      |
+| pnpm        | `pnpm run <script> [args...]`  |
+| bun         | `bun run <script> [args...]`   |
+| Deno        | `Deno run  <script> [args...]` |
 
 ---
 
@@ -142,7 +143,7 @@ Shows the current version of `star-run`.
 
 ```bash
 star-run --version
-# star-run 0.0.1
+# star-run 0.0.2
 ```
 
 ---
@@ -158,7 +159,7 @@ star-run --help
 **Output:**
 
 ```
-star-run 0.0.1 — Universal package manager script runner
+star-run — Universal package manager script runner
 
 Usage:
   star-run <script> [args...]    Run a package.json script
@@ -181,7 +182,7 @@ Examples:
 `star-run` detects the package manager in the following order:
 
 1. **`packageManager` field** in `package.json` (e.g., `"npm@10.0.0"`) — highest priority.
-2. **Lockfiles** — checks for `package-lock.json`, `yarn.lock`, `pnpm-lock.yaml`, `bun.lock`, or `bun.lockb`.
+2. **Lockfiles** — checks for `package-lock.json`, `yarn.lock`, `pnpm-lock.yaml`, `bun.lock`,`deno.json`, or `bun.lockb`.
 3. **Directory traversal** — walks up parent directories until a match is found.
 
 If the `packageManager` field conflicts with an existing lockfile (e.g., field says `yarn` but `package-lock.json` exists), a warning is printed:
