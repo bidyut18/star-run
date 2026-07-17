@@ -41,10 +41,13 @@ jobs:
         if: ${{ steps.branch-filter.outputs.is_release == 'true' }}
         uses: actions/setup-node@v7
         with:
-          node-version: "22"
+          node-version: "26"
           registry-url: "https://registry.npmjs.org"
           package-manager-cache: false
 
+      - name: Upgrade npm
+        run: npm install -g npm@latest
+        
       - name: Install Task
         if: ${{ steps.branch-filter.outputs.is_release == 'true' }}
         uses: arduino/setup-task@v3
