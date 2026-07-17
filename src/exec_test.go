@@ -12,6 +12,7 @@ func TestPackageManagerRunArgs(t *testing.T) {
 		{Yarn, "test", []string{"test"}},
 		{Pnpm, "test", []string{"run", "test"}},
 		{Bun, "test", []string{"run", "test"}},
+		{Deno, "test", []string{"task", "test"}},
 	}
 	for _, tt := range tests {
 		t.Run(string(tt.pm), func(t *testing.T) {
@@ -29,7 +30,7 @@ func TestPackageManagerRunArgs(t *testing.T) {
 }
 
 func TestPackageManagerInstallArgs(t *testing.T) {
-	for _, pm := range []PackageManager{Npm, Yarn, Pnpm, Bun} {
+	for _, pm := range []PackageManager{Npm, Yarn, Pnpm, Bun, Deno} { 
 		t.Run(string(pm), func(t *testing.T) {
 			args := pm.installArgs()
 			if len(args) != 1 || args[0] != "install" {

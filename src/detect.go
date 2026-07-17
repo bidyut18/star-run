@@ -12,7 +12,6 @@ import (
 var (
 	errNoPackageManager = errors.New("no package manager detected")
 
-	
 	lockFiles = []struct {
 		name string
 		pm   PackageManager
@@ -22,10 +21,9 @@ var (
 		{"pnpm-lock.yaml", Pnpm},
 		{"bun.lock", Bun},
 		{"bun.lockb", Bun},
-		{"deno.lock", Deno},  
+		{"deno.lock", Deno},
 	}
 )
-
 
 func detectPackageManager(dir, stopDir string) (PackageManager, string, error) {
 	absDir, err := filepath.Abs(dir)
@@ -42,15 +40,17 @@ func detectPackageManager(dir, stopDir string) (PackageManager, string, error) {
 	}
 
 	for {
-		
+
 		if pm, ok := detectFromPackageJSON(absDir); ok {
 			if warning := mismatchWarning(absDir, pm); warning != "" {
 				return pm, warning, nil
 			}
 			return pm, "", nil
 		}
+		if pm, ok := detectFromConfigFiles(absDir); ok {
+			return pm, "", nil
+		}
 
-		// 2. Lockfile fallback
 		if pm, lockfiles, ok := detectFromLockFiles(absDir); ok {
 			if len(lockfiles) > 1 {
 				warning := fmt.Sprintf("⚠️  Multiple lockfiles found (%s); using %s", strings.Join(lockfiles, ", "), pm)
@@ -73,6 +73,19 @@ func detectPackageManager(dir, stopDir string) (PackageManager, string, error) {
 	return "", "", errNoPackageManager
 }
 
+func detectFromConfigFiles(dir string) (PackageManager, bool) {
+	if _, err := os.Stat(filepath.Join(dir, "deno.json")); err == nil {
+		return Deno, true
+	}
+	if _, err := os.Stat(filepath.Join(dir, "deno.jsonc")); err == nil {
+		return Deno, true
+	}
+	if _, err := os.Stat(filepath.Join(dir, "package.json")); err == nil {
+		return Npm, true 
+	}
+	return "", false
+}
+
 func detectFromPackageJSON(dir string) (PackageManager, bool) {
 	data, err := os.ReadFile(filepath.Join(dir, "package.json"))
 	if err != nil {
@@ -89,7 +102,7 @@ func detectFromPackageJSON(dir string) (PackageManager, bool) {
 	name, _, _ := strings.Cut(pkg.PackageManager, "@")
 	pm := PackageManager(name)
 	switch pm {
-	case Npm, Yarn, Pnpm, Bun,Deno:
+	case Npm, Yarn, Pnpm, Bun, Deno:
 		return pm, true
 	}
 	return "", false

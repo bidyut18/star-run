@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"errors"
 	"flag"
 	"fmt"
 	"os"
@@ -9,7 +10,6 @@ import (
 	"strings"
 	"syscall"
 )
-
 
 var version = "dev"
 
@@ -21,7 +21,8 @@ func main() {
 
 	flag.Usage = func() {
 		fmt.Fprintf(os.Stderr, "star-run %s — Universal package manager script runner\n\n", version)
-		fmt.Fprintf(os.Stderr, "Usage:\n")
+		fmt.Fprintf(os.Stderr, "Usage:")
+
 		fmt.Fprintf(os.Stderr, "  star-run <script> [args...]    Run a package.json script\n")
 		fmt.Fprintf(os.Stderr, "  star-run --install             Install dependencies\n")
 		fmt.Fprintf(os.Stderr, "  star-run --list                List available scripts\n")
@@ -29,11 +30,12 @@ func main() {
 		fmt.Fprintf(os.Stderr, "  star-run --version             Show version\n")
 		fmt.Fprintf(os.Stderr, "  star-run --help                Show this help message\n")
 		fmt.Fprintln(os.Stderr)
-		fmt.Fprintf(os.Stderr, "Examples:\n")
+		fmt.Fprintf(os.Stderr, "Examples:")
+
 		fmt.Fprintf(os.Stderr, "  star-run dev\n")
 		fmt.Fprintf(os.Stderr, "  star-run build --watch\n")
 		fmt.Fprintf(os.Stderr, "  star-run test --coverage\n")
-		
+
 	}
 	flag.Parse()
 
@@ -61,12 +63,17 @@ func main() {
 	switch {
 	case *installFlag:
 		fmt.Printf("📦 Installing dependencies via %s...\n", pm)
-		code := runCommand(ctx, pm.String(), pm.installArgs())
+		code, err := runCommand(ctx, pm.String(), pm.installArgs())
+		if err != nil {
+			fatalf("Error: %v\n", err)
+		}
 		cancel()
 		os.Exit(code)
 
 	case *listFlag:
-		listScripts(cwd, pm, "")
+		if err := listScripts(cwd, pm, ""); err != nil {
+			fatalf("Error: %v\n", err)
+		}
 
 	case *detectFlag:
 		fmt.Println(pm)
@@ -80,14 +87,25 @@ func main() {
 
 		scriptName := args[0]
 
-		svc := ScriptService{Locator: PackageLocator{}, Reader: PackageReader{}}
-		if err := svc.ValidateScript(cwd, "", scriptName); err != nil {
+		svc := ScriptService{}
+
+		if err := svc.ValidateScript(cwd, "", pm, scriptName); err != nil {
+			if errors.Is(err, ErrConfigNotFound) {
+				fmt.Fprintln(os.Stderr, "Error:", err)
+				os.Exit(2)
+			}
+			if errors.Is(err, ErrScriptNotFound) {
+				fmt.Fprintln(os.Stderr, "Error:", err)
+				os.Exit(3)
+			}
 			fatalf("Error: %v\n", err)
 		}
-
 		cmdArgs := append(pm.runArgs(scriptName), args[1:]...)
 		fmt.Printf("🚀 Executing: %s %s\n", pm, strings.Join(cmdArgs, " "))
-		code := runCommand(ctx, pm.String(), cmdArgs)
+		code, err := runCommand(ctx, pm.String(), cmdArgs)
+		if err != nil {
+			fatalf("Error: %v\n", err)
+		}
 		cancel()
 		os.Exit(code)
 	}

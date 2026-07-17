@@ -1,8 +1,5 @@
 package main
 
-import (
-	"fmt"
-)
 
 type PackageManager string
 
@@ -47,4 +44,4 @@ type Script struct {
 	Command string
 }
 
-var ErrPackageNotFound = fmt.Errorf("no package.json found in tree")
+

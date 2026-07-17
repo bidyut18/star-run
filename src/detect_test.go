@@ -1,6 +1,7 @@
 package main
 
 import (
+	"bytes"
 	"os"
 	"path/filepath"
 	"testing"
@@ -157,4 +158,186 @@ func TestDetectPackageManager(t *testing.T) {
 			}
 		})
 	}
+}
+
+func TestDenoConfigReader(t *testing.T) {
+	tmpDir := t.TempDir()
+	content := `{
+  "tasks": {
+    "dev": "deno run --watch main.ts",
+    "build": "deno compile main.ts"
+  }
+}`
+	cfgPath := filepath.Join(tmpDir, "deno.json")
+	if err := os.WriteFile(cfgPath, []byte(content), 0644); err != nil {
+		t.Fatal(err)
+	}
+
+	reader := DenoConfigReader{}
+	scripts, err := reader.ReadScripts(cfgPath)
+	if err != nil {
+		t.Fatalf("ReadScripts failed: %v", err)
+	}
+	if len(scripts) != 2 {
+		t.Errorf("expected 2 scripts, got %d", len(scripts))
+	}
+	// Check that "dev" exists
+	found := false
+	for _, s := range scripts {
+		if s.Name == "dev" && s.Command == "deno run --watch main.ts" {
+			found = true
+		}
+	}
+	if !found {
+		t.Error("script 'dev' not found")
+	}
+
+	has, err := reader.HasScript(cfgPath, "build")
+	if err != nil || !has {
+		t.Errorf("HasScript build: expected true, got %v (err: %v)", has, err)
+	}
+	has, err = reader.HasScript(cfgPath, "missing")
+	if err != nil || has {
+		t.Errorf("HasScript missing: expected false, got %v", has)
+	}
+}
+
+func TestLocateConfig(t *testing.T) {
+	tmpDir := t.TempDir()
+	// Create a package.json
+	pkgPath := filepath.Join(tmpDir, "package.json")
+	if err := os.WriteFile(pkgPath, []byte(`{"scripts":{}}`), 0644); err != nil {
+		t.Fatal(err)
+	}
+	// Create a deno.json in a subdirectory
+	subDir := filepath.Join(tmpDir, "sub")
+	if err := os.Mkdir(subDir, 0755); err != nil {
+		t.Fatal(err)
+	}
+	denoPath := filepath.Join(subDir, "deno.json")
+	if err := os.WriteFile(denoPath, []byte(`{"tasks":{}}`), 0644); err != nil {
+		t.Fatal(err)
+	}
+
+	// Start in subDir, with Deno package manager – should find deno.json
+	cfg, err := LocateConfig(subDir, tmpDir, Deno)
+	if err != nil {
+		t.Fatalf("LocateConfig failed: %v", err)
+	}
+	if cfg.Path != denoPath || cfg.Type != ConfigDenoJSON {
+		t.Errorf("expected deno.json, got %s (type %v)", cfg.Path, cfg.Type)
+	}
+
+	// Start in subDir with npm – should find package.json in parent
+	cfg, err = LocateConfig(subDir, tmpDir, Npm)
+	if err != nil {
+		t.Fatalf("LocateConfig failed: %v", err)
+	}
+	if cfg.Path != pkgPath || cfg.Type != ConfigPackageJSON {
+		t.Errorf("expected package.json, got %s (type %v)", cfg.Path, cfg.Type)
+	}
+}
+
+func TestListScriptsDeno(t *testing.T) {
+	tmpDir := t.TempDir()
+	content := `{
+  "tasks": {
+    "start": "deno run index.ts"
+  }
+}`
+	if err := os.WriteFile(filepath.Join(tmpDir, "deno.json"), []byte(content), 0644); err != nil {
+		t.Fatal(err)
+	}
+
+	var buf bytes.Buffer
+	svc := ScriptService{
+		Renderer: ScriptRenderer{Writer: &buf},
+	}
+	if err := svc.ListScripts(tmpDir, Deno, tmpDir); err != nil {
+		t.Fatalf("ListScripts failed: %v", err)
+	}
+	output := buf.String()
+	if !bytes.Contains([]byte(output), []byte("start")) {
+		t.Errorf("output missing script 'start': %s", output)
+	}
+	if !bytes.Contains([]byte(output), []byte("deno run index.ts")) {
+		t.Errorf("output missing command: %s", output)
+	}
+}
+
+func TestStripJSONC(t *testing.T) {
+	cases := []struct {
+		name    string
+		in      string
+		want    string
+		wantErr bool
+	}{
+		{"url in string", `{"url":"http://a.com"}`, `{"url":"http://a.com"}`, false},
+		{"comment in string", `{"a":"//b"}`, `{"a":"//b"}`, false},
+		{"line comment", `{"a":1}`, `{"a":1}`, false},
+		{"block comment inline", `{"a":/*c*/1}`, `{"a":1}`, false},
+		{"block comment multiline", `{
+/* comment */
+"a":1
+}`, `{
+
+"a":1
+}`, false},
+		{"trailing comma", `{"a":1,}`, `{"a":1}`, false},
+		{"unterminated string", `{"a":"`, ``, true},
+	}
+
+	for _, tt := range cases {
+		t.Run(tt.name, func(t *testing.T) {
+			got, err := stripJSONC([]byte(tt.in))
+			if tt.wantErr {
+				if err == nil {
+					t.Errorf("expected error, got nil")
+				}
+				return
+			}
+			if err != nil {
+				t.Fatalf("unexpected error: %v", err)
+			}
+			if string(got) != tt.want {
+				t.Errorf("stripJSONC(%q) = %q, want %q", tt.in, got, tt.want)
+			}
+		})
+	}
+}
+
+func TestDetectFreshProject(t *testing.T) {
+	t.Run("only package.json no lockfile", func(t *testing.T) {
+		tmpDir := t.TempDir()
+		if err := os.WriteFile(filepath.Join(tmpDir, "package.json"), []byte(`{"name":"test"}`), 0644); err != nil {
+			t.Fatal(err)
+		}
+		pm, warning, err := detectPackageManager(tmpDir, tmpDir)
+		if err != nil {
+			t.Fatalf("unexpected error: %v", err)
+		}
+		if pm != Npm {
+			t.Errorf("expected npm, got %v", pm)
+		}
+		if warning != "" {
+			t.Errorf("expected no warning, got %q", warning)
+		}
+	})
+
+	t.Run("only deno.json no deno.lock", func(t *testing.T) {
+		tmpDir := t.TempDir()
+		if err := os.WriteFile(filepath.Join(tmpDir, "deno.json"), []byte(`{"tasks":{}}`), 0644); err != nil {
+			t.Fatal(err)
+		}
+		pm, warning, err := detectPackageManager(tmpDir, tmpDir)
+		if err != nil {
+			t.Fatalf("unexpected error: %v", err)
+		}
+		if pm != Deno {
+			t.Errorf("expected deno, got %v", pm)
+		}
+		if warning != "" {
+			t.Errorf("expected no warning, got %q", warning)
+		}
+	})
 }

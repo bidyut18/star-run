@@ -1,3 +1,4 @@
+import { fileURLToPath } from "url";
 import * as fs from "fs";
 import * as path from "path";
 import * as crypto from "crypto";
@@ -21,7 +22,8 @@ const TARGETS: Target[] = [
   { platform: "win32",  arch: "x64",  binDir: "win32-x64",    bin: "star-run.exe"  },
 ];
 
-const ROOT_DIR = path.resolve(__dirname, "..");
+
+const ROOT_DIR = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const NPM_DIR  = path.join(ROOT_DIR, "npm");
 const BIN_DIR  = path.join(ROOT_DIR, "bin");
 

@@ -3,6 +3,11 @@ import { spawn } from "child_process";
 import * as path from "path";
 import * as fs from "fs";
 import * as os from "os";
+import { fileURLToPath } from "url";
+import { createRequire } from "module";
+
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
+const require = createRequire(import.meta.url);
 
 const PLATFORM = os.platform();
 const ARCH = os.arch();
@@ -16,14 +21,13 @@ function getBinaryPath(): string | null {
     const binaryPath = path.join(path.dirname(pkgPath), BINARY_NAME);
     if (fs.existsSync(binaryPath)) return binaryPath;
   } catch {
-   
+    
   }
 
- 
   const candidates = [
-    path.join(__dirname, "bin", BINARY_NAME),        // running via tsx / repo root
-    path.join(__dirname, "..", "bin", BINARY_NAME),  // bundled in dist/
-    path.join(process.cwd(), "bin", BINARY_NAME),    // safety net
+    path.join(__dirname, "bin", BINARY_NAME),
+    path.join(__dirname, "..", "bin", BINARY_NAME),
+    path.join(process.cwd(), "bin", BINARY_NAME),
   ];
 
   for (const p of candidates) {
