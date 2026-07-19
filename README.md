@@ -1,4 +1,10 @@
-# 🚀 star-run
+# star-run
+<div align="center">
+<picture >
+  <img src="./assets/logo.svg" alt="star-run logo" width="400" />
+</picture>
+</div>
+
 
 > **Universal package manager script runner** – fast, zero‑config, and distributed globally via npm.
 
@@ -12,7 +18,6 @@
 Stop trying to remember whether the current repository uses `npm`, `yarn`, `pnpm`,`Deno`, or `bun`. Just type `star-run dev` and let the runner instantly figure it out for you.
 
 ---
-
 ## ✨ Features
 
 - ⚡️ **Near‑instant startup** – written in Go, boots in ~3–5 ms with zero runtime overhead.
@@ -230,3 +235,7 @@ task package-npm
 ## 📄 License
 
 This project is licensed under the [MIT License](LICENSE).
+
+## 🎨 Credits
+
+- **Logo**: Designed using [Qwen](https://qwen.ai), incorporating Mount Fuji aesthetics and developer-focused color semantics to reflect the project's speed and universal compatibility.

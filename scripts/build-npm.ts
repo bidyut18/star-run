@@ -16,13 +16,21 @@ interface Target {
 
 const TARGETS: Target[] = [
   { platform: "darwin", arch: "x64", binDir: "darwin-x64", bin: "star-run" },
-  { platform: "darwin", arch: "arm64", binDir: "darwin-arm64", bin: "star-run" },
+  {
+    platform: "darwin",
+    arch: "arm64",
+    binDir: "darwin-arm64",
+    bin: "star-run",
+  },
   { platform: "linux", arch: "x64", binDir: "linux-x64", bin: "star-run" },
   { platform: "linux", arch: "arm64", binDir: "linux-arm64", bin: "star-run" },
   { platform: "win32", arch: "x64", binDir: "win32-x64", bin: "star-run.exe" },
 ];
 
-const ROOT_DIR = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
+const ROOT_DIR = path.resolve(
+  path.dirname(fileURLToPath(import.meta.url)),
+  "..",
+);
 const NPM_DIR = path.join(ROOT_DIR, "npm");
 const BIN_DIR = path.join(ROOT_DIR, "bin");
 
@@ -42,7 +50,10 @@ function copyExecutable(src: string, dst: string): void {
 }
 
 function sha256(file: string): string {
-  return crypto.createHash("sha256").update(fs.readFileSync(file)).digest("hex");
+  return crypto
+    .createHash("sha256")
+    .update(fs.readFileSync(file))
+    .digest("hex");
 }
 
 rmrf(NPM_DIR);
@@ -69,7 +80,6 @@ for (const t of TARGETS) {
   copyExecutable(srcBin, dstBin);
   const checksum = sha256(dstBin);
 
-  // FIX: Add repository.directory for each platform package
   writeJson(path.join(pkgDir, "package.json"), {
     name: pkgName,
     version: VERSION,
@@ -120,7 +130,6 @@ for (const file of ["README.md", "LICENSE"]) {
   const src = path.join(ROOT_DIR, file);
   if (fs.existsSync(src)) fs.copyFileSync(src, path.join(mainDir, file));
 }
-
 
 writeJson(path.join(mainDir, "package.json"), {
   name: rootPkg.name,
